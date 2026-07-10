@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h3>Welcome, {{ user.username }}</h3>
+<p class="text-muted">Role: {{ user.role }}</p>
+<div class="card">
+    <div class="card-body">
+        <p>This is a placeholder dashboard confirming that authentication and
+        session management are working end-to-end.</p>
+        <p>Risk score, SHAP explanations, and forensic alerts will appear here
+        starting from Step 8 of the implementation plan.</p>
+    </div>
+</div>
+{% endblock %}

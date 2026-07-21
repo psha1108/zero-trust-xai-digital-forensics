@@ -76,3 +76,30 @@ class EvidenceLog(db.Model):
     record_hash = db.Column(db.String(64), nullable=False)      # SHA-256 of this record
     previous_hash = db.Column(db.String(64), nullable=True)     # SHA-256 of the prior record
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class AccessEvent(db.Model):
+    """
+    Logs every request to a protected resource DURING an active session —
+    not just the login itself. This is what makes the system continuous
+    Zero Trust rather than one-time login screening: risk gets recalculated
+    every time this table gets a new row.
+    """
+    __tablename__ = "access_events"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    session_id = db.Column(db.String(64), nullable=False)
+
+    resource = db.Column(db.String(100), nullable=False)
+    resource_sensitivity = db.Column(db.String(10), nullable=False)
+
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    request_count = db.Column(db.Integer, default=1)
+
+    ip_address = db.Column(db.String(45), nullable=False)
+    device_id = db.Column(db.String(255), nullable=True)
+
+    decision = db.Column(db.String(10), nullable=True)
+    risk_score = db.Column(db.Float, nullable=True)
+
+    user = db.relationship("User", backref="access_events")

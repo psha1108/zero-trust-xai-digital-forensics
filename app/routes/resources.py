@@ -1,12 +1,12 @@
 import hashlib
 from datetime import datetime
-from flask import Blueprint, render_template, request, abort
+from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 
 from app.extensions import db
 from app.models import AccessEvent
 
-resources_bp = Blueprint("resources", __name__)
+resources_bp = Blueprint("resources", __name__, url_prefix="/api/resources")
 
 RESOURCE_SENSITIVITY = {
     "normal_page": "low",
@@ -16,14 +16,15 @@ RESOURCE_SENSITIVITY = {
     "confidential_page": "high",
 }
 
+RESOURCE_MESSAGES = {
+    "normal_page": ("Normal Employee Page", "General company info, visible to all employees."),
+    "hr_page": ("HR Page", "HR records and policies."),
+    "finance_page": ("Finance Page", "Sensitive financial records."),
+    "admin_page": ("Admin Page", "System administration panel."),
+}
+
 
 def _get_session_id() -> str:
-    """
-    Flask's raw session cookie can be 150+ characters (it's the full
-    signed/encrypted cookie), which doesn't fit in a short DB column.
-    We hash it down to a fixed 64-character SHA-256 hex digest instead —
-    still uniquely identifies the session, just fixed-length.
-    """
     raw_cookie = request.cookies.get("session", "unknown-session")
     return hashlib.sha256(raw_cookie.encode()).hexdigest()
 
@@ -43,36 +44,38 @@ def _log_access(resource: str) -> AccessEvent:
     return event
 
 
-@resources_bp.route("/resources/normal")
+def _resource_response(resource_key: str):
+    _log_access(resource_key)
+    title, message = RESOURCE_MESSAGES[resource_key]
+    return jsonify({
+        "title": title,
+        "sensitivity": RESOURCE_SENSITIVITY[resource_key],
+        "message": message,
+    }), 200
+
+
+@resources_bp.route("/normal", methods=["GET"])
 @login_required
 def normal_page():
-    _log_access("normal_page")
-    return render_template("resource.html", title="Normal Employee Page",
-                            sensitivity="Low", message="General company info, visible to all employees.")
+    return _resource_response("normal_page")
 
 
-@resources_bp.route("/resources/hr")
+@resources_bp.route("/hr", methods=["GET"])
 @login_required
 def hr_page():
-    _log_access("hr_page")
-    return render_template("resource.html", title="HR Page",
-                            sensitivity="Medium", message="HR records and policies.")
+    return _resource_response("hr_page")
 
 
-@resources_bp.route("/resources/finance")
+@resources_bp.route("/finance", methods=["GET"])
 @login_required
 def finance_page():
-    _log_access("finance_page")
-    return render_template("resource.html", title="Finance Page",
-                            sensitivity="High", message="Sensitive financial records.")
+    return _resource_response("finance_page")
 
 
-@resources_bp.route("/resources/admin")
+@resources_bp.route("/admin", methods=["GET"])
 @login_required
 def admin_page():
     if current_user.role != "admin":
         _log_access("admin_page")
-        abort(403)
-    _log_access("admin_page")
-    return render_template("resource.html", title="Admin Page",
-                            sensitivity="High", message="System administration panel.")
+        return jsonify({"error": "Forbidden — admin role required."}), 403
+    return _resource_response("admin_page")

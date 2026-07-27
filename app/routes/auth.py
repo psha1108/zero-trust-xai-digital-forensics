@@ -1,21 +1,14 @@
 from datetime import datetime
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import Blueprint, request, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 
 from app.extensions import db
 from app.models import User, LoginEvent
 
-auth_bp = Blueprint("auth", __name__)
+auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
 
 def _log_login_event(username_attempted: str, success: bool, user_id: int | None) -> LoginEvent:
-    """
-    STEP 2 (Real-time log generation) lives here.
-    Every single login attempt — successful or not — is written to the
-    login_events table immediately. This function is the single source
-    of truth for that table, so later (Step 4) feature_extraction.py
-    only needs to know about this schema, not about auth logic.
-    """
     event = LoginEvent(
         user_id=user_id,
         username_attempted=username_attempted,
@@ -29,63 +22,69 @@ def _log_login_event(username_attempted: str, success: bool, user_id: int | None
     return event
 
 
-@auth_bp.route("/register", methods=["GET", "POST"])
+@auth_bp.route("/register", methods=["POST"])
 def register():
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        email = request.form.get("email", "").strip()
-        password = request.form.get("password", "")
+    data = request.get_json(silent=True) or {}
+    username = (data.get("username") or "").strip()
+    email = (data.get("email") or "").strip()
+    password = data.get("password") or ""
 
-        if not username or not email or not password:
-            flash("All fields are required.", "danger")
-            return redirect(url_for("auth.register"))
+    if not username or not email or not password:
+        return jsonify({"error": "All fields are required."}), 400
 
-        if User.query.filter((User.username == username) | (User.email == email)).first():
-            flash("Username or email already exists.", "danger")
-            return redirect(url_for("auth.register"))
+    if User.query.filter((User.username == username) | (User.email == email)).first():
+        return jsonify({"error": "Username or email already exists."}), 409
 
-        user = User(username=username, email=email)
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
+    user = User(username=username, email=email)
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
 
-        flash("Registration successful. Please log in.", "success")
-        return redirect(url_for("auth.login"))
-
-    return render_template("register.html")
+    return jsonify({"message": "Registration successful."}), 201
 
 
-@auth_bp.route("/login", methods=["GET", "POST"])
+@auth_bp.route("/login", methods=["POST"])
 def login():
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        password = request.form.get("password", "")
+    data = request.get_json(silent=True) or {}
+    username = (data.get("username") or "").strip()
+    password = data.get("password") or ""
 
-        user = User.query.filter_by(username=username).first()
-        success = user is not None and user.check_password(password)
+    user = User.query.filter_by(username=username).first()
+    success = user is not None and user.check_password(password)
 
-        # Log the attempt BEFORE deciding the outcome — forensic logs must
-        # capture failed attempts too, not just successful ones.
-        _log_login_event(
-            username_attempted=username,
-            success=success,
-            user_id=user.id if user else None,
-        )
+    _log_login_event(
+        username_attempted=username,
+        success=success,
+        user_id=user.id if user else None,
+    )
 
-        if success:
-            login_user(user)
-            flash("Login successful.", "success")
-            return redirect(url_for("dashboard.home"))
-        else:
-            flash("Invalid username or password.", "danger")
-            return redirect(url_for("auth.login"))
+    if success:
+        login_user(user)
+        return jsonify({
+            "message": "Login successful.",
+            "user": {"id": user.id, "username": user.username, "role": user.role},
+        }), 200
 
-    return render_template("login.html")
+    return jsonify({"error": "Invalid username or password."}), 401
 
 
-@auth_bp.route("/logout")
+@auth_bp.route("/logout", methods=["POST"])
 @login_required
 def logout():
     logout_user()
-    flash("You have been logged out.", "info")
-    return redirect(url_for("auth.login"))
+    return jsonify({"message": "Logged out."}), 200
+
+
+@auth_bp.route("/me", methods=["GET"])
+@login_required
+def me():
+    """
+    Lets React ask "who am I / am I still logged in?" — needed because
+    React apps reload in the browser and lose in-memory state, but the
+    session cookie persists, so this endpoint restores that knowledge.
+    """
+    return jsonify({
+        "id": current_user.id,
+        "username": current_user.username,
+        "role": current_user.role,
+    }), 200

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h3>{{ title }}</h3>
+<p><span class="badge bg-secondary">Sensitivity: {{ sensitivity }}</span></p>
+<div class="card">
+    <div class="card-body">
+        <p>{{ message }}</p>
+        <p class="text-muted small">This visit has just been logged to access_events.</p>
+    </div>
+</div>
+<a href="{{ url_for('dashboard.home') }}" class="btn btn-outline-secondary mt-3">Back to Dashboard</a>
+{% endblock %}

@@ -1,23 +1,35 @@
-from flask import Flask
+from flask import Flask, jsonify
+from flask_cors import CORS
 
 from config import Config
 from app.extensions import db, login_manager
 
 
 def create_app():
-    """
-    Application factory pattern. Using a factory (instead of a bare
-    module-level `app = Flask(__name__)`) makes it possible to create
-    multiple app instances later — one for running the server, one for
-    tests, one for scripts that need app context (e.g. the synthetic
-    log generator in Step 3) — all sharing the same configuration.
-    """
     app = Flask(__name__)
     app.config.from_object(Config)
 
+    # Allow the React dev server to call this API with cookies included.
+    # Add both common React dev ports (CRA=3000, Vite=5173) so either works.
+    CORS(app, supports_credentials=True, origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+    ])
+
+    # Cross-port localhost requests are still "same-site" to browsers, so
+    # Lax works for local dev without needing HTTPS. In production, this
+    # should become 'None' + SESSION_COOKIE_SECURE=True, served over HTTPS.
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
     db.init_app(app)
     login_manager.init_app(app)
-    login_manager.login_view = "auth.login"
+
+    # Flask-Login's default behavior redirects unauthenticated users to an
+    # HTML login page. That's meaningless for a JSON API — React needs a
+    # proper 401 status with a JSON body instead, so it can react programmatically.
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        return jsonify({"error": "Authentication required"}), 401
 
     # Import models here (not at top) so they register with db
     # only once the app + db are both initialized.
@@ -30,8 +42,10 @@ def create_app():
     # Register blueprints
     from app.routes.auth import auth_bp
     from app.routes.dashboard import dashboard_bp
+    from app.routes.resources import resources_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(resources_bp)
 
     return app

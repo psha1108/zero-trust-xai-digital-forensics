@@ -1,9 +1,10 @@
 from datetime import datetime
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session as flask_session
 from flask_login import login_user, logout_user, login_required, current_user
 
 from app.extensions import db
-from app.models import User, LoginEvent
+from app.models import User, LoginEvent, Session
+from app.utils.fingerprint import get_device_fingerprint, generate_session_id
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -60,6 +61,37 @@ def login():
 
     if success:
         login_user(user)
+
+        # Create the Session row — this is the real "start of a continuous
+        # Zero Trust session," not just a login event. Everything from here
+        # (mid-session risk re-evaluation, forced termination) hinges on
+        # this row existing.
+        new_session_id = generate_session_id()
+        flask_session["app_session_id"] = new_session_id
+
+        device_fp = get_device_fingerprint(request.headers.get("User-Agent", ""))
+        ip = request.remote_addr or "unknown"
+
+        login_event = LoginEvent.query.filter_by(
+            user_id=user.id, success=True
+        ).order_by(LoginEvent.id.desc()).first()
+        # the row _log_login_event() just wrote, moments ago, in this same request
+
+        login_event.session_id = new_session_id
+
+        db.session.add(Session(
+            session_id=new_session_id,
+            user_id=user.id,
+            login_event_id=login_event.id,
+            started_at=datetime.utcnow(),
+            start_ip=ip,
+            current_ip=ip,
+            start_device_fingerprint=device_fp,
+            current_device_fingerprint=device_fp,
+            is_active=True,
+        ))
+        db.session.commit()
+
         return jsonify({
             "message": "Login successful.",
             "user": {"id": user.id, "username": user.username, "role": user.role},

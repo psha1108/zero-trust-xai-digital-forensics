@@ -10,3 +10,7 @@ shap==0.46.0
 joblib==1.4.2
 reportlab==4.2.2
 Werkzeug==3.0.3
+
+faker
+python-dateutil
+pytest

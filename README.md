@@ -72,3 +72,40 @@ ztxai/
 ├── forensics/                # Step 11 will live here
 └── data/                     # synthetic + UNSW-NB15/CIC-IDS CSVs
 ```
+
+## Synthetic Data Generation
+
+To generate fake synthetic logs (login_events, sessions, access_events, and an ML training dataset), use the following command from the project root:
+
+```bash
+python -m ml.data_generation.generate_synthetic_logs
+```
+
+This will output four CSV files into the `data/synthetic/` directory.
+
+To test the quality and constraints of the synthetic data, run:
+
+```bash
+python -m pytest tests/ml/test_synthetic_data_quality.py
+```
+Synthetic Behavioural Log Generator
+
+Purpose:
+Generate application-level login, session and resource-access logs for ML
+development before the backend integration is complete.
+
+Command:
+py -3.11 -m ml.data_generation.generate_synthetic_logs
+
+Generated files:
+- data/synthetic/login_events.csv
+- data/synthetic/sessions.csv
+- data/synthetic/access_events.csv
+- data/synthetic/ml_training_dataset.csv
+
+Tests:
+py -3.11 -m pytest tests/ml/test_synthetic_data_quality.py -v
+
+Important:
+Synthetic logs are used only for ML development and demonstration.
+Production predictions will use features extracted from real Flask application logs.

@@ -103,7 +103,38 @@ def login():
 @auth_bp.route("/logout", methods=["POST"])
 @login_required
 def logout():
+    """
+    Closes the Session row properly — this is what makes 'ended_at',
+    'end_reason', and 'is_active' actually mean something, instead of
+    sitting unused since the sessions-table branch. Also back-fills
+    login_events.session_duration_sec now that we know how long the
+    session actually lasted.
+    """
+    session_id = flask_session.get("app_session_id")
+
+    if session_id:
+        session_row = Session.query.filter_by(
+            session_id=session_id, is_active=True
+        ).first()
+
+        if session_row:
+            session_row.ended_at = datetime.utcnow()
+            session_row.end_reason = "logout"
+            session_row.is_active = False
+
+            duration_sec = int(
+                (session_row.ended_at - session_row.started_at).total_seconds()
+            )
+
+            login_event = LoginEvent.query.get(session_row.login_event_id)
+            if login_event:
+                login_event.session_duration_sec = duration_sec
+
+            db.session.commit()
+
     logout_user()
+    flask_session.pop("app_session_id", None)
+
     return jsonify({"message": "Logged out."}), 200
 
 

@@ -23,6 +23,8 @@ def _log_login_event(username_attempted: str, success: bool, user_id: int | None
     return event
 
 
+import re
+
 @auth_bp.route("/register", methods=["POST"])
 def register():
     data = request.get_json(silent=True) or {}
@@ -32,6 +34,18 @@ def register():
 
     if not username or not email or not password:
         return jsonify({"error": "All fields are required."}), 400
+
+    username_regex = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]{3,19}$")
+    if not username_regex.match(username):
+        return jsonify({"error": "Invalid username format."}), 400
+
+    email_regex = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    if not email_regex.match(email):
+        return jsonify({"error": "Invalid email format."}), 400
+
+    password_regex = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$")
+    if not password_regex.match(password):
+        return jsonify({"error": "Password does not meet requirements."}), 400
 
     if User.query.filter((User.username == username) | (User.email == email)).first():
         return jsonify({"error": "Username or email already exists."}), 409

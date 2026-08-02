@@ -134,6 +134,8 @@ class AccessEvent(db.Model):
     device_id = db.Column(db.String(255), nullable=True)             # raw User-Agent, kept for audit
     device_fingerprint = db.Column(db.String(100), nullable=True)    # parsed, for ML comparisons
     privilege_mismatch = db.Column(db.Boolean, default=False, nullable=False)
+    ip_changed = db.Column(db.Boolean, default=False, nullable=False)        # True if IP differs from session start/last-known
+    device_changed = db.Column(db.Boolean, default=False, nullable=False)    # True if device fingerprint differs
 
     decision = db.Column(db.String(10), nullable=True)
     risk_score = db.Column(db.Float, nullable=True)

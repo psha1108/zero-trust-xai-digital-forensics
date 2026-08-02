@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify, session as flask_session
 from flask_login import login_required, current_user
 
 from app.extensions import db
-from app.models import AccessEvent
+from app.models import AccessEvent, Session
 from app.utils.fingerprint import get_device_fingerprint
 
 resources_bp = Blueprint("resources", __name__, url_prefix="/api/resources")
@@ -55,20 +55,49 @@ def _is_privilege_mismatch(resource: str) -> bool:
     return current_user.role not in allowed_roles
 
 
+def _detect_and_update_session_changes(session_id: str, current_ip: str, current_device_fp: str) -> tuple[bool, bool]:
+    """
+    Compares this request's IP/device against what the session last had on
+    record, updates the session to the new values, and reports whether
+    either one changed. This is the actual "continuous" part of continuous
+    Zero Trust — a session that started from one IP/device and suddenly
+    shows a different one mid-session is exactly the signal this project
+    is meant to catch.
+    """
+    session_row = Session.query.filter_by(session_id=session_id, is_active=True).first()
+    if not session_row:
+        return False, False
+
+    ip_changed = session_row.current_ip != current_ip
+    device_changed = session_row.current_device_fingerprint != current_device_fp
+
+    session_row.current_ip = current_ip
+    session_row.current_device_fingerprint = current_device_fp
+    db.session.commit()
+
+    return ip_changed, device_changed
+
+
 def _log_access(resource: str) -> AccessEvent:
     sensitivity = RESOURCE_SENSITIVITY.get(resource, "low")
     device_fp = get_device_fingerprint(request.headers.get("User-Agent", ""))
+    ip = request.remote_addr or "unknown"
+    session_id = _get_session_id()
+
+    ip_changed, device_changed = _detect_and_update_session_changes(session_id, ip, device_fp)
 
     event = AccessEvent(
         user_id=current_user.id,
-        session_id=_get_session_id(),
+        session_id=session_id,
         resource=resource,
         resource_sensitivity=sensitivity,
         timestamp=datetime.utcnow(),
-        ip_address=request.remote_addr or "unknown",
+        ip_address=ip,
         device_id=request.headers.get("User-Agent", "unknown"),
         device_fingerprint=device_fp,
         privilege_mismatch=_is_privilege_mismatch(resource),
+        ip_changed=ip_changed,
+        device_changed=device_changed,
     )
     db.session.add(event)
     db.session.commit()

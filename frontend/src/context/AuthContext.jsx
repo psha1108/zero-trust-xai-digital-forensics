@@ -11,9 +11,9 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
       try {
         const data = await authService.checkAuth();
-        // Assuming backend returns { logged_in: true, user: { username, role } }
-        if (data.logged_in || data.user) {
-          setUser(data.user || data);
+        // The backend /api/auth/me endpoint returns the user object directly: { id, username, role }
+        if (data && data.id) {
+          setUser(data);
         } else {
           setUser(null);
         }

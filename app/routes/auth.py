@@ -1,21 +1,15 @@
 from datetime import datetime
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import Blueprint, request, jsonify, session as flask_session
 from flask_login import login_user, logout_user, login_required, current_user
 
 from app.extensions import db
-from app.models import User, LoginEvent
+from app.models import User, LoginEvent, Session
+from app.utils.fingerprint import get_device_fingerprint, generate_session_id
 
-auth_bp = Blueprint("auth", __name__)
+auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
 
 def _log_login_event(username_attempted: str, success: bool, user_id: int | None) -> LoginEvent:
-    """
-    STEP 2 (Real-time log generation) lives here.
-    Every single login attempt — successful or not — is written to the
-    login_events table immediately. This function is the single source
-    of truth for that table, so later (Step 4) feature_extraction.py
-    only needs to know about this schema, not about auth logic.
-    """
     event = LoginEvent(
         user_id=user_id,
         username_attempted=username_attempted,
@@ -29,63 +23,131 @@ def _log_login_event(username_attempted: str, success: bool, user_id: int | None
     return event
 
 
-@auth_bp.route("/register", methods=["GET", "POST"])
+@auth_bp.route("/register", methods=["POST"])
 def register():
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        email = request.form.get("email", "").strip()
-        password = request.form.get("password", "")
+    data = request.get_json(silent=True) or {}
+    username = (data.get("username") or "").strip()
+    email = (data.get("email") or "").strip()
+    password = data.get("password") or ""
 
-        if not username or not email or not password:
-            flash("All fields are required.", "danger")
-            return redirect(url_for("auth.register"))
+    if not username or not email or not password:
+        return jsonify({"error": "All fields are required."}), 400
 
-        if User.query.filter((User.username == username) | (User.email == email)).first():
-            flash("Username or email already exists.", "danger")
-            return redirect(url_for("auth.register"))
+    if User.query.filter((User.username == username) | (User.email == email)).first():
+        return jsonify({"error": "Username or email already exists."}), 409
 
-        user = User(username=username, email=email)
-        user.set_password(password)
-        db.session.add(user)
+    user = User(username=username, email=email)
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
+
+    return jsonify({"message": "Registration successful."}), 201
+
+
+@auth_bp.route("/login", methods=["POST"])
+def login():
+    data = request.get_json(silent=True) or {}
+    username = (data.get("username") or "").strip()
+    password = data.get("password") or ""
+
+    user = User.query.filter_by(username=username).first()
+    success = user is not None and user.check_password(password)
+
+    _log_login_event(
+        username_attempted=username,
+        success=success,
+        user_id=user.id if user else None,
+    )
+
+    if success:
+        login_user(user)
+
+        # Create the Session row — this is the real "start of a continuous
+        # Zero Trust session," not just a login event. Everything from here
+        # (mid-session risk re-evaluation, forced termination) hinges on
+        # this row existing.
+        new_session_id = generate_session_id()
+        flask_session["app_session_id"] = new_session_id
+
+        device_fp = get_device_fingerprint(request.headers.get("User-Agent", ""))
+        ip = request.remote_addr or "unknown"
+
+        login_event = LoginEvent.query.filter_by(
+            user_id=user.id, success=True
+        ).order_by(LoginEvent.id.desc()).first()
+        # the row _log_login_event() just wrote, moments ago, in this same request
+
+        login_event.session_id = new_session_id
+
+        db.session.add(Session(
+            session_id=new_session_id,
+            user_id=user.id,
+            login_event_id=login_event.id,
+            started_at=datetime.utcnow(),
+            start_ip=ip,
+            current_ip=ip,
+            start_device_fingerprint=device_fp,
+            current_device_fingerprint=device_fp,
+            is_active=True,
+        ))
         db.session.commit()
 
-        flash("Registration successful. Please log in.", "success")
-        return redirect(url_for("auth.login"))
+        return jsonify({
+            "message": "Login successful.",
+            "user": {"id": user.id, "username": user.username, "role": user.role},
+        }), 200
 
-    return render_template("register.html")
-
-
-@auth_bp.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        password = request.form.get("password", "")
-
-        user = User.query.filter_by(username=username).first()
-        success = user is not None and user.check_password(password)
-
-        # Log the attempt BEFORE deciding the outcome — forensic logs must
-        # capture failed attempts too, not just successful ones.
-        _log_login_event(
-            username_attempted=username,
-            success=success,
-            user_id=user.id if user else None,
-        )
-
-        if success:
-            login_user(user)
-            flash("Login successful.", "success")
-            return redirect(url_for("dashboard.home"))
-        else:
-            flash("Invalid username or password.", "danger")
-            return redirect(url_for("auth.login"))
-
-    return render_template("login.html")
+    return jsonify({"error": "Invalid username or password."}), 401
 
 
-@auth_bp.route("/logout")
+@auth_bp.route("/logout", methods=["POST"])
 @login_required
 def logout():
+    """
+    Closes the Session row properly — this is what makes 'ended_at',
+    'end_reason', and 'is_active' actually mean something, instead of
+    sitting unused since the sessions-table branch. Also back-fills
+    login_events.session_duration_sec now that we know how long the
+    session actually lasted.
+    """
+    session_id = flask_session.get("app_session_id")
+
+    if session_id:
+        session_row = Session.query.filter_by(
+            session_id=session_id, is_active=True
+        ).first()
+
+        if session_row:
+            session_row.ended_at = datetime.utcnow()
+            session_row.end_reason = "logout"
+            session_row.is_active = False
+
+            duration_sec = int(
+                (session_row.ended_at - session_row.started_at).total_seconds()
+            )
+
+            login_event = LoginEvent.query.get(session_row.login_event_id)
+            if login_event:
+                login_event.session_duration_sec = duration_sec
+
+            db.session.commit()
+
     logout_user()
-    flash("You have been logged out.", "info")
-    return redirect(url_for("auth.login"))
+    flask_session.pop("app_session_id", None)
+
+    return jsonify({"message": "Logged out."}), 200
+
+
+@auth_bp.route("/me", methods=["GET"])
+@login_required
+def me():
+    """
+    Lets React ask "who am I / am I still logged in?" — needed because
+    React apps reload in the browser and lose in-memory state, but the
+    session cookie persists, so this endpoint restores that knowledge.
+    """
+    return jsonify({
+        "id": current_user.id,
+        "username": current_user.username,
+        "role": current_user.role,
+    }), 200

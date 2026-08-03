@@ -141,5 +141,3 @@ class AccessEvent(db.Model):
     risk_score = db.Column(db.Float, nullable=True)
 
     user = db.relationship("User", backref="access_events")
-
-    

@@ -1,14 +1,13 @@
 import React from 'react';
-import Card from '../../components/dashboard/Card';
+import ResourceView from '../../components/resources/ResourceView';
+import resourceService from '../../services/resourceService';
 
 const HrResource = () => {
   return (
-    <div>
-      <h1 className="page-title">HR Department Access</h1>
-      <Card>
-        <div className="placeholder-text">HR Resource data will load here based on backend API.</div>
-      </Card>
-    </div>
+    <ResourceView 
+      pageName="HR Resource Access" 
+      fetchFn={resourceService.getHrResource} 
+    />
   );
 };
 

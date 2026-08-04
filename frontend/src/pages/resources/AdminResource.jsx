@@ -1,14 +1,13 @@
 import React from 'react';
-import Card from '../../components/dashboard/Card';
+import ResourceView from '../../components/resources/ResourceView';
+import resourceService from '../../services/resourceService';
 
 const AdminResource = () => {
   return (
-    <div>
-      <h1 className="page-title">Admin Controls</h1>
-      <Card>
-        <div className="placeholder-text">Admin Resource data and controls will load here.</div>
-      </Card>
-    </div>
+    <ResourceView 
+      pageName="System Administration Access" 
+      fetchFn={resourceService.getAdminResource} 
+    />
   );
 };
 

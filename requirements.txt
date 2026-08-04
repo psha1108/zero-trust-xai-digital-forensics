@@ -10,5 +10,8 @@ shap==0.46.0
 joblib==1.4.2
 reportlab==4.2.2
 Werkzeug==3.0.3
+faker
+python-dateutil
+pytest
 cryptography==43.0.1
 flask-cors==5.0.0

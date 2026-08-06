@@ -1,0 +1,95 @@
+{
+  "dataset": "ml_training_dataset.csv",
+  "dataset_sha256": "6447c2bdbbc939eaf97d21bc5b2bd70a290a067d9bcf5847511c1c47c9ac869d",
+  "metadata_schema_version": 1,
+  "total_rows": 845,
+  "total_users": 50,
+  "model_feature_columns": [
+    "role",
+    "login_hour",
+    "is_working_hour",
+    "failed_attempt_count",
+    "is_new_ip",
+    "is_new_device",
+    "is_unusual_time",
+    "session_duration_minutes",
+    "resource_sensitivity_score",
+    "access_count_5min",
+    "unauthorized_access_attempt",
+    "ip_changed_during_session",
+    "device_changed_during_session",
+    "sensitive_resource_access_count"
+  ],
+  "excluded_model_columns": [
+    "user_id",
+    "scenario_type",
+    "risk_label"
+  ],
+  "split_strategy": "nested deterministic StratifiedGroupKFold by user_id",
+  "outer_split": {
+    "random_state": 42,
+    "n_splits": 5,
+    "selected_fold": 1
+  },
+  "inner_split": {
+    "random_state": 43,
+    "n_splits": 5,
+    "selected_fold": 3
+  },
+  "partitions": {
+    "fit": {
+      "rows": 554,
+      "users": 32,
+      "risk_distribution": {
+        "low": 362,
+        "medium": 129,
+        "high": 63
+      },
+      "role_distribution": {
+        "admin": 135,
+        "employee": 112,
+        "finance_user": 83,
+        "guest": 146,
+        "hr_user": 78
+      },
+      "low_risk_rows_used_for_fit": 362
+    },
+    "validation": {
+      "rows": 138,
+      "users": 8,
+      "risk_distribution": {
+        "low": 90,
+        "medium": 33,
+        "high": 15
+      },
+      "role_distribution": {
+        "admin": 15,
+        "employee": 52,
+        "finance_user": 17,
+        "guest": 16,
+        "hr_user": 38
+      }
+    },
+    "test": {
+      "rows": 153,
+      "users": 10,
+      "risk_distribution": {
+        "low": 98,
+        "medium": 35,
+        "high": 20
+      },
+      "role_distribution": {
+        "admin": 28,
+        "employee": 28,
+        "finance_user": 37,
+        "guest": 33,
+        "hr_user": 27
+      }
+    }
+  },
+  "user_overlap": {
+    "fit_validation": 0,
+    "fit_test": 0,
+    "validation_test": 0
+  }
+}

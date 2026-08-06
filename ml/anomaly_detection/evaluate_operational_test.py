@@ -1,4 +1,4 @@
-﻿"""Persist final reporting-only evaluation of the frozen outer test set."""
+"""Persist final reporting-only evaluation of the frozen outer test set."""
 
 from __future__ import annotations
 
@@ -64,18 +64,19 @@ PREDICTIONS_PATH = (
 
 
 def calculate_sha256(path: Path) -> str:
-    """Return the SHA-256 checksum of a file."""
+    """Return a cross-platform checksum for a text artifact."""
 
-    digest = hashlib.sha256()
+    raw_bytes = path.read_bytes()
 
-    with path.open("rb") as file_handle:
-        for block in iter(
-            lambda: file_handle.read(1024 * 1024),
-            b"",
-        ):
-            digest.update(block)
+    canonical_bytes = (
+        raw_bytes
+        .replace(b"\r\n", b"\n")
+        .replace(b"\r", b"\n")
+    )
 
-    return digest.hexdigest()
+    return hashlib.sha256(
+        canonical_bytes
+    ).hexdigest()
 
 
 def main() -> None:

@@ -328,3 +328,81 @@ def load_random_forest_selection_data() -> tuple[
         )
 
     return fit_df, validation_df
+
+
+def load_random_forest_development_data() -> pd.DataFrame:
+    """Return combined fit + validation data for final model training.
+
+    This loader deliberately excludes the untouched final-test partition.
+    It may be used only after Random Forest model selection is frozen.
+    """
+
+    fit_df, validation_df = (
+        load_random_forest_selection_data()
+    )
+
+    development_df = pd.concat(
+        [
+            fit_df,
+            validation_df,
+        ],
+        axis=0,
+    ).sort_values(
+        "source_row_index"
+    ).copy()
+
+    if len(development_df) != 692:
+        raise ValueError(
+            "Expected 692 Random Forest development rows."
+        )
+
+    if development_df[
+        "user_id"
+    ].nunique() != 40:
+        raise ValueError(
+            "Expected 40 users in Random Forest development data."
+        )
+
+    if not development_df[
+        "partition"
+    ].isin(
+        [
+            "fit",
+            "validation",
+        ]
+    ).all():
+        raise ValueError(
+            "Random Forest development data contains "
+            "a non-development partition."
+        )
+
+    if "test" in set(
+        development_df["partition"]
+    ):
+        raise ValueError(
+            "Final-test records must not enter Random Forest "
+            "development training."
+        )
+
+    expected_label_counts = {
+        "low": 452,
+        "medium": 162,
+        "high": 78,
+    }
+
+    actual_label_counts = (
+        development_df[
+            "risk_label"
+        ]
+        .value_counts()
+        .to_dict()
+    )
+
+    if actual_label_counts != expected_label_counts:
+        raise ValueError(
+            "Unexpected Random Forest development "
+            "target distribution: "
+            f"{actual_label_counts}"
+        )
+
+    return development_df

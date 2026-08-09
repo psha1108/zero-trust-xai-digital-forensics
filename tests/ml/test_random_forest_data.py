@@ -164,3 +164,80 @@ def test_source_row_identity_is_preserved() -> None:
         assert row["user_id"] == source_row["user_id"]
         assert row["risk_label"] == source_row["risk_label"]
         assert row["scenario_type"] == source_row["scenario_type"]
+
+
+def test_development_loader_combines_only_fit_and_validation() -> None:
+    """Final training data must contain development records only."""
+
+    from ml.classification.data import (
+        load_random_forest_development_data,
+    )
+
+    development_df = (
+        load_random_forest_development_data()
+    )
+
+    assert len(development_df) == 692
+
+    assert development_df[
+        "user_id"
+    ].nunique() == 40
+
+    assert set(
+        development_df["partition"]
+    ) == {
+        "fit",
+        "validation",
+    }
+
+    assert "test" not in set(
+        development_df["partition"]
+    )
+
+
+def test_development_loader_target_distribution() -> None:
+    """Combined development labels must match the frozen split."""
+
+    from ml.classification.data import (
+        load_random_forest_development_data,
+    )
+
+    development_df = (
+        load_random_forest_development_data()
+    )
+
+    assert development_df[
+        "risk_label"
+    ].value_counts().to_dict() == {
+        "low": 452,
+        "medium": 162,
+        "high": 78,
+    }
+
+
+def test_development_loader_preserves_source_identity() -> None:
+    """Combined development rows must preserve original row IDs."""
+
+    from ml.classification.data import (
+        load_random_forest_development_data,
+    )
+
+    development_df = (
+        load_random_forest_development_data()
+    )
+
+    assert development_df[
+        "source_row_index"
+    ].is_unique
+
+    assert development_df[
+        "source_row_index"
+    ].is_monotonic_increasing
+
+    assert len(
+        set(
+            development_df[
+                "source_row_index"
+            ]
+        )
+    ) == 692

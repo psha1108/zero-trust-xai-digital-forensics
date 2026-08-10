@@ -224,3 +224,82 @@ def calculate_random_forest_semantic_fingerprint(
             )
 
     return digest.hexdigest()
+
+
+METADATA_SEMANTIC_FIELDS = (
+    "metadata_schema_version",
+    "model_name",
+    "model_type",
+    "artifact_filename",
+    "semantic_fingerprint",
+    "reproducibility_definition",
+    "dataset_filename",
+    "dataset_canonical_sha256",
+    "assignment_filename",
+    "assignment_canonical_sha256",
+    "selection_filename",
+    "selection_canonical_sha256",
+    "training_scope",
+    "development_rows",
+    "development_users",
+    "development_label_counts",
+    "source_feature_count",
+    "transformed_feature_count",
+    "source_feature_columns",
+    "transformed_feature_columns",
+    "transformed_source_feature_mapping",
+    "role_categories",
+    "selected_candidate_id",
+    "model_parameters",
+    "class_order",
+    "class_to_index",
+    "report_label_order",
+)
+
+
+def calculate_random_forest_metadata_semantic_fingerprint(
+    metadata: dict,
+) -> str:
+    """Fingerprint the stable Random Forest metadata contract.
+
+    Artifact byte checksums and software versions are intentionally
+    excluded because they are provenance information rather than
+    semantic model/feature/class identity.
+    """
+
+    if not isinstance(
+        metadata,
+        dict,
+    ):
+        raise TypeError(
+            "Random Forest metadata must be a dictionary."
+        )
+
+    missing_fields = (
+        set(METADATA_SEMANTIC_FIELDS)
+        -
+        set(metadata)
+    )
+
+    if missing_fields:
+        raise ValueError(
+            "Random Forest metadata fingerprint input "
+            "is missing fields: "
+            f"{sorted(missing_fields)}"
+        )
+
+    semantic_metadata = {
+        field: metadata[field]
+        for field in METADATA_SEMANTIC_FIELDS
+    }
+
+    canonical_json = json.dumps(
+        semantic_metadata,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+    )
+
+    return hashlib.sha256(
+        canonical_json.encode("utf-8")
+    ).hexdigest()

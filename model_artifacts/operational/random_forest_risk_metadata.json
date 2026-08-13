@@ -1,0 +1,132 @@
+{
+  "artifact_filename": "random_forest_risk_bundle.joblib",
+  "artifact_sha256": "d315c2993f97143483f692181ea286e1ba77d2ba1da02b9a87c20ded63b71ee4",
+  "assignment_canonical_sha256": "96efcbc2b8097287b83b1ef289b46e733bbd49bfff6d9d166a6b646c765e91ea",
+  "assignment_filename": "isolation_forest_split_assignments.csv",
+  "class_order": [
+    "high",
+    "low",
+    "medium"
+  ],
+  "class_to_index": {
+    "high": 0,
+    "low": 1,
+    "medium": 2
+  },
+  "dataset_canonical_sha256": "b93e093189a130f2c7d953ff66cedd9cfcb8cfa2321b5c0c4475e68962ddff15",
+  "dataset_filename": "ml_training_dataset.csv",
+  "development_label_counts": {
+    "high": 78,
+    "low": 452,
+    "medium": 162
+  },
+  "development_rows": 692,
+  "development_training_metrics": {
+    "accuracy": 1.0,
+    "balanced_accuracy": 1.0,
+    "log_loss": 0.027718393052772662,
+    "macro_f1": 1.0,
+    "weighted_f1": 1.0
+  },
+  "development_users": 40,
+  "final_test_accessed": false,
+  "metadata_schema_version": 1,
+  "metadata_semantic_fingerprint": "c92696b0db0b57e2a6f0ff472ca84cdb9af287290f6762803dbee3e7156647b2",
+  "model_name": "operational_random_forest",
+  "model_parameters": {
+    "bootstrap": true,
+    "class_weight": null,
+    "criterion": "gini",
+    "max_depth": null,
+    "max_features": "sqrt",
+    "min_samples_leaf": 1,
+    "min_samples_split": 2,
+    "n_estimators": 300,
+    "n_jobs": 1,
+    "random_state": 42
+  },
+  "model_type": "RandomForestClassifier",
+  "report_label_order": [
+    "low",
+    "medium",
+    "high"
+  ],
+  "reproducibility_definition": "semantic Random Forest structure, feature contract, class order and probability contract",
+  "role_categories": [
+    "admin",
+    "employee",
+    "finance_user",
+    "guest",
+    "hr_user"
+  ],
+  "selected_candidate_id": "rf_baseline",
+  "selection_canonical_sha256": "da1be58595d7605aabc66459e18fc01e346d944086a4d63219ccb7e5a660014c",
+  "selection_filename": "operational_random_forest_selection.json",
+  "semantic_fingerprint": "afc34ff1b02b200b6af25ac18fbda573086c337b26b53558bf74cbc5c4cc5824",
+  "software_versions": {
+    "joblib": "1.4.2",
+    "numpy": "1.26.4",
+    "pandas": "2.2.2",
+    "python_implementation": "CPython",
+    "scikit_learn": "1.5.1"
+  },
+  "source_feature_columns": [
+    "role",
+    "login_hour",
+    "is_working_hour",
+    "failed_attempt_count",
+    "is_new_ip",
+    "is_new_device",
+    "is_unusual_time",
+    "session_duration_minutes",
+    "resource_sensitivity_score",
+    "access_count_5min",
+    "unauthorized_access_attempt",
+    "ip_changed_during_session",
+    "device_changed_during_session",
+    "sensitive_resource_access_count"
+  ],
+  "source_feature_count": 14,
+  "training_scope": "all labeled records from fit and validation partitions",
+  "transformed_feature_columns": [
+    "role_admin",
+    "role_employee",
+    "role_finance_user",
+    "role_guest",
+    "role_hr_user",
+    "login_hour",
+    "is_working_hour",
+    "failed_attempt_count",
+    "is_new_ip",
+    "is_new_device",
+    "is_unusual_time",
+    "session_duration_minutes",
+    "resource_sensitivity_score",
+    "access_count_5min",
+    "unauthorized_access_attempt",
+    "ip_changed_during_session",
+    "device_changed_during_session",
+    "sensitive_resource_access_count"
+  ],
+  "transformed_feature_count": 18,
+  "transformed_source_feature_mapping": {
+    "access_count_5min": "access_count_5min",
+    "device_changed_during_session": "device_changed_during_session",
+    "failed_attempt_count": "failed_attempt_count",
+    "ip_changed_during_session": "ip_changed_during_session",
+    "is_new_device": "is_new_device",
+    "is_new_ip": "is_new_ip",
+    "is_unusual_time": "is_unusual_time",
+    "is_working_hour": "is_working_hour",
+    "login_hour": "login_hour",
+    "resource_sensitivity_score": "resource_sensitivity_score",
+    "role_admin": "role",
+    "role_employee": "role",
+    "role_finance_user": "role",
+    "role_guest": "role",
+    "role_hr_user": "role",
+    "sensitive_resource_access_count": "sensitive_resource_access_count",
+    "session_duration_minutes": "session_duration_minutes",
+    "unauthorized_access_attempt": "unauthorized_access_attempt"
+  }
+}

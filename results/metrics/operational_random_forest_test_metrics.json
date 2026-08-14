@@ -1,0 +1,110 @@
+{
+  "class_order": [
+    "high",
+    "low",
+    "medium"
+  ],
+  "confusion_matrix": {
+    "label_order": [
+      "low",
+      "medium",
+      "high"
+    ],
+    "matrix": [
+      [
+        97,
+        1,
+        0
+      ],
+      [
+        2,
+        33,
+        0
+      ],
+      [
+        0,
+        0,
+        20
+      ]
+    ]
+  },
+  "error_analysis": {
+    "correct_count": 150,
+    "error_count": 3,
+    "error_scenarios": {
+      "medium_sensitive_resource_access": 1,
+      "normal_office_login": 1,
+      "unusual_time_login": 1
+    },
+    "misclassification_pairs": {
+      "low_as_medium": 1,
+      "medium_as_low": 2
+    }
+  },
+  "evaluation_schema_version": 1,
+  "evaluation_scope": "Synthetic operational behavioral dataset with held-out users; these metrics are not evidence of real-world deployment performance.",
+  "evaluation_status": "final_outer_test_reporting_only",
+  "metadata_semantic_fingerprint": "c92696b0db0b57e2a6f0ff472ca84cdb9af287290f6762803dbee3e7156647b2",
+  "model_change_prohibition": "The Random Forest configuration, preprocessing, features, class contract and artifact must not be modified using these outer-test results.",
+  "model_name": "operational_random_forest",
+  "model_type": "RandomForestClassifier",
+  "multiclass_metrics": {
+    "accuracy": 0.9803921568627451,
+    "balanced_accuracy": 0.9775510204081632,
+    "log_loss": 0.09978697143547707,
+    "macro_f1": 0.9804311042448318,
+    "macro_precision": 0.9834620716973658,
+    "macro_recall": 0.9775510204081632,
+    "roc_auc_ovr_macro": 0.9955792794775847,
+    "roc_auc_ovr_weighted": 0.9950945144364886,
+    "weighted_f1": 0.980299837142243
+  },
+  "per_class_metrics": {
+    "high": {
+      "f1": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "support": 20
+    },
+    "low": {
+      "f1": 0.9847715736040609,
+      "precision": 0.9797979797979798,
+      "recall": 0.9897959183673469,
+      "support": 98
+    },
+    "medium": {
+      "f1": 0.9565217391304348,
+      "precision": 0.9705882352941176,
+      "recall": 0.9428571428571428,
+      "support": 35
+    }
+  },
+  "report_label_order": [
+    "low",
+    "medium",
+    "high"
+  ],
+  "result_artifacts": {
+    "predictions_file": "results/predictions/operational_random_forest_test_predictions.csv",
+    "predictions_sha256": "d7d9f9fb074a3675a915d896072ddbc268ba2c5e40750c6d216cab52a0fcce67",
+    "scenario_results_file": "results/metrics/operational_random_forest_test_scenarios.csv",
+    "scenario_results_sha256": "a0608555b321f322729ddfd4a8da9f72421a77660049277611d594ce5553196f"
+  },
+  "selected_candidate_id": "rf_baseline",
+  "semantic_fingerprint": "afc34ff1b02b200b6af25ac18fbda573086c337b26b53558bf74cbc5c4cc5824",
+  "test_partition": {
+    "label_distribution": {
+      "high": 20,
+      "low": 98,
+      "medium": 35
+    },
+    "rows": 153,
+    "users": 10
+  },
+  "training_provenance": {
+    "assignment_canonical_sha256": "96efcbc2b8097287b83b1ef289b46e733bbd49bfff6d9d166a6b646c765e91ea",
+    "dataset_canonical_sha256": "b93e093189a130f2c7d953ff66cedd9cfcb8cfa2321b5c0c4475e68962ddff15",
+    "selection_canonical_sha256": "da1be58595d7605aabc66459e18fc01e346d944086a4d63219ccb7e5a660014c",
+    "training_metadata_final_test_accessed": false
+  }
+}

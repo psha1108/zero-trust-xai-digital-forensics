@@ -1,0 +1,79 @@
+{
+  "model_name": "ZeroTrust_KMeans_Behavioral_Archetypes",
+  "model_type": "KMeans_Unsupervised",
+  "artifact_schema_version": "1.0.0",
+  "selected_k": 4,
+  "source_feature_count": 14,
+  "transformed_feature_count": 18,
+  "source_feature_list": [
+    "hour_of_day",
+    "day_of_week",
+    "session_duration_min",
+    "request_count",
+    "bytes_transferred_kb",
+    "failed_logins_last_24h",
+    "mfa_prompt_count",
+    "device_trust_score",
+    "location_anomaly_score",
+    "access_risk_index",
+    "action_sensitivity_level",
+    "session_entropy",
+    "resource_criticality_tier",
+    "user_role"
+  ],
+  "transformed_feature_list": [
+    "hour_of_day",
+    "day_of_week",
+    "session_duration_min",
+    "request_count",
+    "bytes_transferred_kb",
+    "failed_logins_last_24h",
+    "mfa_prompt_count",
+    "device_trust_score",
+    "location_anomaly_score",
+    "access_risk_index",
+    "action_sensitivity_level",
+    "session_entropy",
+    "resource_criticality_tier",
+    "user_role_Admin",
+    "user_role_Analyst",
+    "user_role_Dev",
+    "user_role_Manager",
+    "user_role_User"
+  ],
+  "role_categories": [
+    "Admin",
+    "Analyst",
+    "Dev",
+    "Manager",
+    "User"
+  ],
+  "training_rows": 554,
+  "validation_rows": 138,
+  "test_rows": 153,
+  "training_users": 32,
+  "model_semantic_fingerprint": "2867faf066704bb08d3f5cf10556dcae3c4299dfcebbec160970f959401448d3",
+  "metrics": {
+    "selected_k": 4,
+    "feature_dimensions": {
+      "source_features": 14,
+      "transformed_features": 18
+    },
+    "fit_inertia": 6586.2937,
+    "fit_metrics": {
+      "silhouette_score": 0.0565,
+      "davies_bouldin_index": 3.12,
+      "calinski_harabasz_score": 29.4607
+    },
+    "validation_metrics": {
+      "silhouette_score": 0.0386,
+      "davies_bouldin_index": 3.3927,
+      "calinski_harabasz_score": 6.3654
+    },
+    "test_metrics": {
+      "silhouette_score": 0.0354,
+      "davies_bouldin_index": 3.3826,
+      "calinski_harabasz_score": 6.9201
+    }
+  }
+}

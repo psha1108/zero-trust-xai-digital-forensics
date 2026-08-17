@@ -1,0 +1,72 @@
+{
+  "candidate_count": 8,
+  "dataset_canonical_sha256": "b93e093189a130f2c7d953ff66cedd9cfcb8cfa2321b5c0c4475e68962ddff15",
+  "final_test_accessed": false,
+  "fit_rows": 554,
+  "fit_users": 32,
+  "model_class_order": [
+    "high",
+    "low",
+    "medium"
+  ],
+  "model_name": "operational_random_forest",
+  "model_type": "RandomForestClassifier",
+  "report_label_order": [
+    "low",
+    "medium",
+    "high"
+  ],
+  "selected_candidate_id": "rf_baseline",
+  "selected_parameters": {
+    "bootstrap": true,
+    "class_weight": null,
+    "criterion": "gini",
+    "max_depth": null,
+    "max_features": "sqrt",
+    "min_samples_leaf": 1,
+    "min_samples_split": 2,
+    "n_estimators": 300,
+    "n_jobs": 1,
+    "random_state": 42
+  },
+  "selected_validation_metrics": {
+    "accuracy": 0.9855072463768116,
+    "balanced_accuracy": 0.9676767676767678,
+    "high_f1": 0.9655172413793104,
+    "high_precision": 1.0,
+    "high_recall": 0.9333333333333333,
+    "high_support": 15,
+    "log_loss": 0.08956543180615158,
+    "low_f1": 0.994475138121547,
+    "low_precision": 0.989010989010989,
+    "low_recall": 1.0,
+    "low_support": 90,
+    "macro_f1": 0.9765631163992756,
+    "medium_f1": 0.9696969696969697,
+    "medium_precision": 0.9696969696969697,
+    "medium_recall": 0.9696969696969697,
+    "medium_support": 33,
+    "validation_errors": 2,
+    "weighted_f1": 0.985402326461079
+  },
+  "selection_priority": [
+    {
+      "direction": "maximize",
+      "metric": "macro_f1"
+    },
+    {
+      "direction": "maximize",
+      "metric": "balanced_accuracy"
+    },
+    {
+      "direction": "minimize",
+      "metric": "log_loss"
+    }
+  ],
+  "selection_rationale": "All frozen candidates produced identical macro F1 and balanced accuracy on validation; rf_baseline had the lowest validation log loss under the predeclared tertiary selection metric.",
+  "selection_schema_version": 1,
+  "selection_status": "validation_selection_frozen",
+  "split_assignment_canonical_sha256": "96efcbc2b8097287b83b1ef289b46e733bbd49bfff6d9d166a6b646c765e91ea",
+  "validation_rows": 138,
+  "validation_users": 8
+}

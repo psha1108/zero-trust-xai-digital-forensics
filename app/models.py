@@ -54,7 +54,8 @@ class LoginEvent(db.Model):
     ip_address = db.Column(db.String(45), nullable=False)
     device_info = db.Column(db.String(255), nullable=True)   # user-agent string
     success = db.Column(db.Boolean, nullable=False)
-    session_duration_sec = db.Column(db.Integer, nullable=True)
+    session_duration_sec = db.Column(db.Integer, nullable=True)  # populated when the session ends (feature/session-lifecycle)
+    session_id = db.Column(db.String(64), nullable=True)  # links a successful login to its Session row
 
     anomaly_score = db.Column(db.Float, nullable=True)
     risk_label = db.Column(db.String(10), nullable=True)      # Low / Medium / High
@@ -77,6 +78,39 @@ class EvidenceLog(db.Model):
     previous_hash = db.Column(db.String(64), nullable=True)     # SHA-256 of the prior record
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+class Session(db.Model):
+    """
+    One row per active or past login session. This is the actual
+    enforcement mechanism for Adaptive Access Control: is_active=False
+    is what genuinely terminates a session, independent of whether the
+    browser's Flask-Login cookie is still technically valid.
+
+    Also the anchor table for session-time ML features (join against
+    access_events on session_id) and for forensic timeline reconstruction.
+    """
+    __tablename__ = "sessions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.String(64), unique=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    login_event_id = db.Column(db.Integer, db.ForeignKey("login_events.id"), nullable=False)
+
+    started_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    ended_at = db.Column(db.DateTime, nullable=True)
+    end_reason = db.Column(db.String(20), nullable=True)  # logout / timeout / blocked / terminated
+
+    start_ip = db.Column(db.String(45), nullable=False)
+    current_ip = db.Column(db.String(45), nullable=False)
+    start_device_fingerprint = db.Column(db.String(100), nullable=False)
+    current_device_fingerprint = db.Column(db.String(100), nullable=False)
+
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    current_risk_score = db.Column(db.Float, nullable=True)
+    current_risk_label = db.Column(db.String(10), nullable=True)
+
+    user = db.relationship("User", backref="sessions")
+    login_event = db.relationship("LoginEvent", backref="session")
+
 class AccessEvent(db.Model):
     """
     Logs every request to a protected resource DURING an active session —
@@ -97,7 +131,11 @@ class AccessEvent(db.Model):
     request_count = db.Column(db.Integer, default=1)
 
     ip_address = db.Column(db.String(45), nullable=False)
-    device_id = db.Column(db.String(255), nullable=True)
+    device_id = db.Column(db.String(255), nullable=True)             # raw User-Agent, kept for audit
+    device_fingerprint = db.Column(db.String(100), nullable=True)    # parsed, for ML comparisons
+    privilege_mismatch = db.Column(db.Boolean, default=False, nullable=False)
+    ip_changed = db.Column(db.Boolean, default=False, nullable=False)        # True if IP differs from session start/last-known
+    device_changed = db.Column(db.Boolean, default=False, nullable=False)    # True if device fingerprint differs
 
     decision = db.Column(db.String(10), nullable=True)
     risk_score = db.Column(db.Float, nullable=True)

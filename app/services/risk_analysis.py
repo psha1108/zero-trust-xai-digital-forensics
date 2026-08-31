@@ -10,8 +10,14 @@ from app.services.operational_features import (
 from ml.classification.inference import (
     classify_operational_record,
 )
+from ml.explainability.shap.contracts import (
+    ShapExplanation,
+)
 from ml.explainability.shap.pipeline import (
     explain_random_forest_prediction,
+)
+from ml.explainability.shap.serialization import (
+    explanation_to_dict,
 )
 
 
@@ -56,6 +62,29 @@ def analyze_operational_access(
             "Random Forest prediction/explanation class mismatch: "
             f"prediction={predicted_risk!r}, "
             f"explanation={explained_prediction!r}."
+        )
+
+    explanation_contract = explanation.get(
+        "explanation"
+    )
+
+    if isinstance(
+        explanation_contract,
+        ShapExplanation,
+    ):
+        explanation = {
+            **explanation,
+            "explanation": explanation_to_dict(
+                explanation_contract
+            ),
+        }
+    elif not isinstance(
+        explanation_contract,
+        dict,
+    ):
+        raise TypeError(
+            "SHAP explanation payload must be a "
+            "ShapExplanation or dictionary."
         )
 
     return {

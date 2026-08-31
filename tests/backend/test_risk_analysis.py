@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import pytest
+from ml.explainability.shap.contracts import (
+    ShapExplanation,
+    ShapFeatureContribution,
+)
 
 from app.services.risk_analysis import analyze_operational_access
 
@@ -219,3 +223,82 @@ def test_analysis_does_not_return_policy_action(
     assert "action" not in result
     assert "decision" not in result
     assert "policy_action" not in result
+
+def test_analysis_serializes_shap_contract_for_backend(
+    monkeypatch,
+) -> None:
+    record = _sample_record()
+
+    monkeypatch.setattr(
+        "app.services.risk_analysis."
+        "build_operational_feature_record_from_database",
+        lambda **kwargs: record,
+    )
+
+    monkeypatch.setattr(
+        "app.services.risk_analysis."
+        "classify_operational_record",
+        lambda sample: {
+            "predicted_risk": "medium",
+            "probability_low": 0.10,
+            "probability_medium": 0.80,
+            "probability_high": 0.10,
+        },
+    )
+
+    shap_contract = ShapExplanation(
+        prediction="medium",
+        base_value=0.25,
+        contributions=(
+            ShapFeatureContribution(
+                feature_name="failed_attempt_count",
+                contribution=0.20,
+            ),
+            ShapFeatureContribution(
+                feature_name="is_new_ip",
+                contribution=0.05,
+            ),
+        ),
+    )
+
+    monkeypatch.setattr(
+        "app.services.risk_analysis."
+        "explain_random_forest_prediction",
+        lambda sample, bundle_path=None: {
+            "explanation": shap_contract,
+            "prediction": "medium",
+            "class_index": 2,
+            "class_order": ["high", "low", "medium"],
+            "model_probability": 0.80,
+            "additivity": {
+                "base_value": 0.25,
+                "contribution_sum": 0.25,
+                "reconstructed_output": 0.50,
+                "model_output": 0.50,
+                "additivity_error": 0.0,
+                "is_additive": True,
+            },
+        },
+    )
+
+    result = analyze_operational_access(
+        session_id="session-123",
+        access_event_id=42,
+    )
+
+    serialized = result["explanation"]["explanation"]
+
+    assert serialized == {
+        "prediction": "medium",
+        "base_value": 0.25,
+        "contributions": [
+            {
+                "feature_name": "failed_attempt_count",
+                "contribution": 0.20,
+            },
+            {
+                "feature_name": "is_new_ip",
+                "contribution": 0.05,
+            },
+        ],
+    }

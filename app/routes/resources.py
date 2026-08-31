@@ -28,9 +28,9 @@ RESOURCE_SENSITIVITY = {
 }
 
 RESOURCE_ALLOWED_ROLES = {
-    "normal_page": {"user", "admin"},
-    "hr_page": {"user", "admin"},
-    "finance_page": {"user", "admin"},   # intentionally open — high sensitivity, no restriction
+    "normal_page": {"admin", "employee", "finance_user", "guest", "hr_user"},
+    "hr_page": {"admin", "employee", "finance_user", "guest", "hr_user"},
+    "finance_page": {"admin", "employee", "finance_user", "guest", "hr_user"},   # intentionally open — high sensitivity, no restriction
     "admin_page": {"admin"},              # the only genuinely restricted resource right now
 }
 

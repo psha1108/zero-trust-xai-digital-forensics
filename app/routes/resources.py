@@ -4,6 +4,7 @@ from flask_login import login_required, current_user
 
 from app.extensions import db
 from app.models import AccessEvent, Session
+from app.services.risk_analysis import analyze_operational_access
 from app.utils.fingerprint import get_device_fingerprint
 
 resources_bp = Blueprint("resources", __name__, url_prefix="/api/resources")
@@ -28,9 +29,9 @@ RESOURCE_SENSITIVITY = {
 }
 
 RESOURCE_ALLOWED_ROLES = {
-    "normal_page": {"user", "admin"},
-    "hr_page": {"user", "admin"},
-    "finance_page": {"user", "admin"},   # intentionally open — high sensitivity, no restriction
+    "normal_page": {"admin", "employee", "finance_user", "guest", "hr_user"},
+    "hr_page": {"admin", "employee", "finance_user", "guest", "hr_user"},
+    "finance_page": {"admin", "employee", "finance_user", "guest", "hr_user"},   # intentionally open — high sensitivity, no restriction
     "admin_page": {"admin"},              # the only genuinely restricted resource right now
 }
 
@@ -104,8 +105,24 @@ def _log_access(resource: str) -> AccessEvent:
     return event
 
 
+def _log_and_analyze_access(resource: str):
+    """
+    Persist one access event first, then classify and explain that
+    exact committed event using the operational RF + SHAP pipeline.
+    """
+
+    event = _log_access(resource)
+
+    analysis = analyze_operational_access(
+        session_id=event.session_id,
+        access_event_id=event.id,
+    )
+
+    return event, analysis
+
+
 def _resource_response(resource_key: str):
-    _log_access(resource_key)
+    _log_and_analyze_access(resource_key)
     title, message = RESOURCE_MESSAGES[resource_key]
     return jsonify({
         "title": title,
@@ -136,6 +153,6 @@ def finance_page():
 @login_required
 def admin_page():
     if current_user.role != "admin":
-        _log_access("admin_page")  # still logged — privilege_mismatch will be True
+        _log_and_analyze_access("admin_page")  # still logged — privilege_mismatch will be True
         return jsonify({"error": "Forbidden — admin role required."}), 403
     return _resource_response("admin_page")

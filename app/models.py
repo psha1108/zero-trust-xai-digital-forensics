@@ -18,7 +18,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(20), default="user", nullable=False)  # 'user' or 'admin'
+    role = db.Column(db.String(20), default="employee", nullable=False)  # approved ML roles: admin/employee/finance_user/guest/hr_user
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     login_events = db.relationship("LoginEvent", backref="user", lazy=True)

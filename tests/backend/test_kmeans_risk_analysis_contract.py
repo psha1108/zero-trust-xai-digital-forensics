@@ -1,4 +1,4 @@
-﻿"""Backend contract tests for K-Means behavioral integration."""
+"""Backend contract tests for K-Means behavioral integration."""
 
 from __future__ import annotations
 
@@ -99,6 +99,20 @@ def _patch_analysis_stack(
 
     monkeypatch.setattr(
         risk_analysis,
+        "score_operational_record",
+        lambda sample, **kwargs: {
+            "anomaly_score": 0.50,
+            "anomaly_threshold": 0.5532259181941123,
+            "threshold_margin": (
+                0.50 - 0.5532259181941123
+            ),
+            "is_anomaly": False,
+        },
+        raising=False,
+    )
+
+    monkeypatch.setattr(
+        risk_analysis,
         "classify_operational_record",
         fake_classifier,
     )
@@ -149,6 +163,7 @@ def test_rf_shap_and_kmeans_receive_exact_same_feature_record(
 
     assert set(result) == {
         "features",
+        "anomaly_detection",
         "prediction",
         "behavioral_cluster",
         "explanation",

@@ -22,6 +22,21 @@ def _stub_behavioral_clustering(monkeypatch) -> None:
     )
 
 
+@pytest.fixture(autouse=True)
+def _stub_anomaly_detection(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "app.services.risk_analysis.score_operational_record",
+        lambda sample, **kwargs: {
+            "anomaly_score": 0.50,
+            "anomaly_threshold": 0.5532259181941123,
+            "threshold_margin": (
+                0.50 - 0.5532259181941123
+            ),
+            "is_anomaly": False,
+        },
+    )
+
+
 def _sample_record() -> dict[str, object]:
     return {
         "role": "employee",
@@ -121,6 +136,14 @@ def test_analysis_uses_exact_same_record_for_rf_and_shap(
 
     assert result == {
         "features": record,
+        "anomaly_detection": {
+            "anomaly_score": 0.50,
+            "anomaly_threshold": 0.5532259181941123,
+            "threshold_margin": (
+                0.50 - 0.5532259181941123
+            ),
+            "is_anomaly": False,
+        },
         "prediction": {
             "predicted_risk": "high",
             "probability_low": 0.05,

@@ -1,10 +1,10 @@
 import React from 'react';
-import Card from '../../components/dashboard/Card';
 import SessionStatusCard from '../../components/dashboard/SessionStatusCard';
 import LoginHistoryTable from '../../components/dashboard/LoginHistoryTable';
 import AccessHistoryTable from '../../components/dashboard/AccessHistoryTable';
 import SecurityAlertsCard from '../../components/dashboard/SecurityAlertsCard';
 import SecurityStateCard from '../../components/dashboard/SecurityStateCard';
+import DigitalForensicsCard from '../../components/dashboard/DigitalForensicsCard';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -22,10 +22,8 @@ const Dashboard = () => {
         {/* 5. Persisted Security State */}
         <SecurityStateCard />
 
-        {/* 6. Digital Forensics (Placeholder) */}
-        <Card title="Digital Forensics" className="widget-forensics">
-          <div className="placeholder-text">No forensic investigation generated.</div>
-        </Card>
+        {/* 6. Digital Forensics */}
+        <DigitalForensicsCard />
 
         {/* 2. Recent Login Activity */}
         <LoginHistoryTable />

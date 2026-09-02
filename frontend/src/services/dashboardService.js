@@ -21,9 +21,10 @@ const dashboardService = {
     return response.data;
   },
 
-  // No dedicated backend Security Alerts endpoint exists yet.
-  // Keep this empty rather than inventing security data or a fake API.
-  getSecurityAlerts: async () => null,
+  getSecurityAlerts: async () => {
+    const response = await axiosInstance.get('/dashboard/security-alerts');
+    return response.data;
+  },
 };
 
 export default dashboardService;

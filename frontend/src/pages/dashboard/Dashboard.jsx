@@ -4,6 +4,7 @@ import SessionStatusCard from '../../components/dashboard/SessionStatusCard';
 import LoginHistoryTable from '../../components/dashboard/LoginHistoryTable';
 import AccessHistoryTable from '../../components/dashboard/AccessHistoryTable';
 import SecurityAlertsCard from '../../components/dashboard/SecurityAlertsCard';
+import SecurityStateCard from '../../components/dashboard/SecurityStateCard';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -18,10 +19,8 @@ const Dashboard = () => {
         {/* 4. Security Alerts */}
         <SecurityAlertsCard />
 
-        {/* 5. Risk Score (Placeholder) */}
-        <Card title="Risk Analysis" className="widget-risk">
-          <div className="placeholder-text">Risk Analysis Not Available Yet</div>
-        </Card>
+        {/* 5. Persisted Security State */}
+        <SecurityStateCard />
 
         {/* 6. Digital Forensics (Placeholder) */}
         <Card title="Digital Forensics" className="widget-forensics">

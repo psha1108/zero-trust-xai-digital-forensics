@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import DashboardLayout from './components/layout/DashboardLayout';
@@ -39,11 +40,13 @@ function App() {
               <Route path="/resources/finance" element={<FinanceResource />} />
               <Route path="/resources/admin" element={<AdminResource />} />
               
-              {/* Forensics Routes */}
-              <Route path="/forensics" element={<ForensicsDashboard />} />
-              <Route path="/forensics/evidence" element={<EvidenceLogView />} />
-              <Route path="/forensics/timeline/:sessionId" element={<TimelineView />} />
-              <Route path="/forensics/report/:sessionId" element={<ForensicReport />} />
+              {/* Forensics Routes - admin navigation guard */}
+              <Route element={<AdminRoute />}>
+                <Route path="/forensics" element={<ForensicsDashboard />} />
+                <Route path="/forensics/evidence" element={<EvidenceLogView />} />
+                <Route path="/forensics/timeline/:sessionId" element={<TimelineView />} />
+                <Route path="/forensics/report/:sessionId" element={<ForensicReport />} />
+              </Route>
             </Route>
           </Route>
 

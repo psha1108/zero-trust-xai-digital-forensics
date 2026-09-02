@@ -129,8 +129,59 @@ def test_database_to_random_forest_to_shap_pipeline(
         assert list(result["features"]) == MODEL_FEATURE_COLUMNS
         assert len(result["features"]) == 14
 
+        anomaly_detection = result["anomaly_detection"]
         prediction = result["prediction"]
+        behavioral_cluster = result["behavioral_cluster"]
         explanation = result["explanation"]
+
+        assert set(anomaly_detection) == {
+            "anomaly_score",
+            "anomaly_threshold",
+            "threshold_margin",
+            "is_anomaly",
+        }
+
+        assert isinstance(
+            anomaly_detection["anomaly_score"],
+            float,
+        )
+
+        assert anomaly_detection["anomaly_threshold"] == pytest.approx(
+            0.5532259181941123,
+            abs=1e-15,
+        )
+
+        assert anomaly_detection["threshold_margin"] == pytest.approx(
+            anomaly_detection["anomaly_score"]
+            - anomaly_detection["anomaly_threshold"],
+            abs=1e-12,
+        )
+
+        assert anomaly_detection["is_anomaly"] == (
+            anomaly_detection["anomaly_score"]
+            >= anomaly_detection["anomaly_threshold"]
+        )
+
+        assert set(behavioral_cluster) == {
+            "cluster_id",
+            "archetype_name",
+        }
+
+        assert behavioral_cluster["cluster_id"] in {
+            0,
+            1,
+        }
+
+        expected_archetypes = {
+            0: "Elevated Behavioral Activity",
+            1: "Routine Behavioral Activity",
+        }
+
+        assert behavioral_cluster["archetype_name"] == (
+            expected_archetypes[
+                behavioral_cluster["cluster_id"]
+            ]
+        )
 
         assert prediction["predicted_risk"] in {
             "low",
@@ -174,3 +225,36 @@ def test_database_to_random_forest_to_shap_pipeline(
 
         assert isinstance(serialized, str)
         assert serialized
+
+        db.session.expire_all()
+
+        persisted_login_event = db.session.get(
+            LoginEvent,
+            current_login.id,
+        )
+
+        persisted_access_event = db.session.get(
+            AccessEvent,
+            current_access.id,
+        )
+
+        assert persisted_login_event is not None
+        assert persisted_access_event is not None
+
+        assert persisted_login_event.anomaly_score == pytest.approx(
+            anomaly_detection["anomaly_score"],
+            abs=1e-15,
+        )
+
+        assert persisted_login_event.risk_label == (
+            prediction["predicted_risk"]
+        )
+
+        assert persisted_login_event.cluster_id == (
+            behavioral_cluster["cluster_id"]
+        )
+
+        # Model outputs remain evidence; policy is still separate.
+        assert persisted_login_event.action_taken is None
+        assert persisted_access_event.decision is None
+        assert persisted_access_event.risk_score is None

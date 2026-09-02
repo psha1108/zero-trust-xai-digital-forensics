@@ -1,0 +1,106 @@
+{
+  "archetype_score_features": [
+    "failed_attempt_count",
+    "sensitive_resource_access_count",
+    "access_count_5min",
+    "session_duration_minutes",
+    "is_unusual_time",
+    "resource_sensitivity_score",
+    "unauthorized_access_attempt"
+  ],
+  "archetype_semantics": "behavioral context only; cluster IDs are not risk classes or access-control decisions",
+  "artifact_filename": "kmeans_behavioral_bundle.joblib",
+  "artifact_schema_version": 1,
+  "artifact_sha256": "39c8647ea8b317c765ec3e8decac9794ea4b71c3377452d33091ce4b237a7f7d",
+  "canonical_archetype_names": {
+    "0": "Elevated Behavioral Activity",
+    "1": "Routine Behavioral Activity"
+  },
+  "dataset_filename": "ml_training_dataset.csv",
+  "dataset_sha256": "6447c2bdbbc939eaf97d21bc5b2bd70a290a067d9bcf5847511c1c47c9ac869d",
+  "development_cluster_sizes": {
+    "0": 76,
+    "1": 616
+  },
+  "fit_rows": 554,
+  "kmeans_parameters": {
+    "algorithm": "lloyd",
+    "n_clusters": 2,
+    "n_init": 20,
+    "random_state": 42
+  },
+  "metadata_fingerprint_sha256": "bd53d214a1e1a6cc8c8a45dbfcaa412274ddfaf9c95358a8a1324b30724ec4a8",
+  "metadata_schema_version": 1,
+  "model_fingerprint_sha256": "9059ca795d0317fafd420761d7a226fede6d9bdaf7b600d92df626dd09b34392",
+  "model_name": "operational_kmeans_behavioral_clustering",
+  "model_type": "KMeans",
+  "native_activity_scores": {
+    "0": -0.18844068814399065,
+    "1": 1.5273613670618205
+  },
+  "native_to_canonical_cluster_id": {
+    "0": 1,
+    "1": 0
+  },
+  "risk_label_used_for_training": false,
+  "scenario_type_used_for_training": false,
+  "selected_k": 2,
+  "selection_report_filename": "operational_kmeans_selection.json",
+  "selection_report_sha256": "11be6247fa0fba344eafad08c5ad4aff65e4bf4463dc62743e719b3314b447a6",
+  "selection_selected_k": 2,
+  "software_versions": {
+    "joblib": "1.4.2",
+    "numpy": "1.26.4",
+    "pandas": "2.2.2",
+    "python": "3.11.9",
+    "scikit_learn": "1.5.1"
+  },
+  "source_feature_count": 14,
+  "source_features": [
+    "role",
+    "login_hour",
+    "is_working_hour",
+    "failed_attempt_count",
+    "is_new_ip",
+    "is_new_device",
+    "is_unusual_time",
+    "session_duration_minutes",
+    "resource_sensitivity_score",
+    "access_count_5min",
+    "unauthorized_access_attempt",
+    "ip_changed_during_session",
+    "device_changed_during_session",
+    "sensitive_resource_access_count"
+  ],
+  "split_assignments_filename": "isolation_forest_split_assignments.csv",
+  "split_assignments_sha256": "3b04239a1bade6f6815d472b5f6b5b5fe98df7eeabb1ccbc264ceefcbb17c138",
+  "task": "unsupervised_behavioral_clustering",
+  "test_partition_used_for_training": false,
+  "test_rows_used_for_training": 0,
+  "training_partition": "fit_plus_validation",
+  "training_rows": 692,
+  "training_users": 40,
+  "transformed_feature_count": 18,
+  "transformed_features": [
+    "role_admin",
+    "role_employee",
+    "role_finance_user",
+    "role_guest",
+    "role_hr_user",
+    "login_hour",
+    "is_working_hour",
+    "failed_attempt_count",
+    "is_new_ip",
+    "is_new_device",
+    "is_unusual_time",
+    "session_duration_minutes",
+    "resource_sensitivity_score",
+    "access_count_5min",
+    "unauthorized_access_attempt",
+    "ip_changed_during_session",
+    "device_changed_during_session",
+    "sensitive_resource_access_count"
+  ],
+  "user_id_used_for_training": false,
+  "validation_rows": 138
+}

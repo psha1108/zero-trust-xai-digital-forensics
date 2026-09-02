@@ -1,0 +1,91 @@
+{
+  "artifact_filename": "isolation_forest_bundle.joblib",
+  "artifact_sha256": "7d098cf38d3f3b9cd129302369258171dbf065685c599e3c0bfd82dde9403f05",
+  "assignment_filename": "isolation_forest_split_assignments.csv",
+  "assignment_sha256": "3b04239a1bade6f6815d472b5f6b5b5fe98df7eeabb1ccbc264ceefcbb17c138",
+  "calibration": {
+    "final_anomaly_threshold": 0.5532259181941123,
+    "final_development_normal_rows": 452,
+    "final_flag_rate": 0.1261061946902655,
+    "final_flagged_rows": 57,
+    "normal_flag_rate": 0.12430939226519337,
+    "original_flagged_rows": 45,
+    "original_normal_rows": 362,
+    "selected_validation_threshold": 0.554034390894,
+    "transferred_quantile": 0.8756906077348067
+  },
+  "constant_low_risk_features": [
+    "is_unusual_time",
+    "ip_changed_during_session",
+    "device_changed_during_session"
+  ],
+  "dataset_filename": "ml_training_dataset.csv",
+  "dataset_sha256": "6447c2bdbbc939eaf97d21bc5b2bd70a290a067d9bcf5847511c1c47c9ac869d",
+  "development_low_risk_rows": 452,
+  "development_score_summary": {
+    "maximum": 0.6413545245796451,
+    "mean": 0.512607552789452,
+    "median": 0.5077875856743767,
+    "minimum": 0.4528604820373457
+  },
+  "metadata_schema_version": 2,
+  "model_name": "operational_isolation_forest",
+  "model_parameters": {
+    "bootstrap": false,
+    "contamination": "auto",
+    "max_features": 1.0,
+    "max_samples": 128,
+    "n_estimators": 300,
+    "n_jobs": 1,
+    "random_state": 42
+  },
+  "model_type": "IsolationForest",
+  "reproducibility_definition": "semantic model structure, transformed scores, predictions and threshold",
+  "semantic_fingerprint": "77b1dc298717107f1b1bd353d6da4a01c6fd2f00bf348a3cb4026cde0897d44e",
+  "software_versions": {
+    "joblib": "1.4.2",
+    "numpy": "1.26.4",
+    "pandas": "2.2.2",
+    "python_implementation": "CPython",
+    "scikit_learn": "1.5.1"
+  },
+  "source_feature_columns": [
+    "role",
+    "login_hour",
+    "is_working_hour",
+    "failed_attempt_count",
+    "is_new_ip",
+    "is_new_device",
+    "is_unusual_time",
+    "session_duration_minutes",
+    "resource_sensitivity_score",
+    "access_count_5min",
+    "unauthorized_access_attempt",
+    "ip_changed_during_session",
+    "device_changed_during_session",
+    "sensitive_resource_access_count"
+  ],
+  "source_feature_count": 14,
+  "training_scope": "low-risk records from fit and validation partitions",
+  "transformed_feature_columns": [
+    "role_admin",
+    "role_employee",
+    "role_finance_user",
+    "role_guest",
+    "role_hr_user",
+    "login_hour",
+    "is_working_hour",
+    "failed_attempt_count",
+    "is_new_ip",
+    "is_new_device",
+    "is_unusual_time",
+    "session_duration_minutes",
+    "resource_sensitivity_score",
+    "access_count_5min",
+    "unauthorized_access_attempt",
+    "ip_changed_during_session",
+    "device_changed_during_session",
+    "sensitive_resource_access_count"
+  ],
+  "transformed_feature_count": 18
+}

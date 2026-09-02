@@ -64,7 +64,7 @@ def register():
     if User.query.filter((User.username == username) | (User.email == email)).first():
         return jsonify({"error": "Username or email already exists."}), 409
 
-    user = User(username=username, email=email)
+    user = User(username=username, email=email, role="employee")
     user.set_password(password)
     db.session.add(user)
     db.session.commit()

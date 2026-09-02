@@ -1,25 +1,33 @@
 import axios from 'axios';
 
-// The backend is expected to be running on localhost (typically port 5000 for Flask)
-// You can adjust the baseURL if your backend uses a different port.
+// Flask REST API used by the React frontend.
 const axiosInstance = axios.create({
   baseURL: 'http://localhost:5000/api',
-  withCredentials: true, // This is CRITICAL for Flask-Login session cookies
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Response interceptor to handle common errors (e.g., 401 Unauthorized)
+// OTP is intentionally returned as HTTP 401 by the Zero Trust backend.
+// It must not be confused with an expired or unauthenticated session.
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    // If we receive a 401, it means the session has expired or the user is not authenticated
-    if (error.response && error.response.status === 401) {
-      // We will handle redirecting to login at the app level or context level,
-      // but logging it here is helpful.
-      console.warn('Session expired or unauthorized. Please log in again.');
+    const response = error.response;
+    const payload = response?.data;
+
+    const isOtpChallenge =
+      response?.status === 401 &&
+      payload?.requires_otp === true &&
+      payload?.policy_action === 'OTP';
+
+    if (response?.status === 401 && !isOtpChallenge) {
+      console.warn(
+        'Session expired, blocked, or unauthorized. Please authenticate again.'
+      );
     }
+
     return Promise.reject(error);
   }
 );

@@ -1,43 +1,24 @@
 import axiosInstance from '../api/axios';
 
 const dashboardService = {
-  // TODO: Missing backend endpoint for session status details (like Login Time).
-  // Current implementation relies on the AuthContext user object for Username and Role.
-  // getSessionDetails: async () => {
-  //   const response = await axiosInstance.get('/session-status');
-  //   return response.data;
-  // },
+  getSessionStatus: async () => {
+    const response = await axiosInstance.get('/dashboard/session-status');
+    return response.data;
+  },
 
-  // TODO: Missing backend endpoint for login history.
   getLoginHistory: async () => {
-    // Placeholder function. Do NOT invent fake APIs.
-    // Uncomment and adjust when the endpoint is created.
-    /*
-    const response = await axiosInstance.get('/logins');
+    const response = await axiosInstance.get('/dashboard/login-history');
     return response.data;
-    */
-    return null; 
   },
 
-  // TODO: Missing backend endpoint for access events.
   getAccessHistory: async () => {
-    // Placeholder function.
-    /*
-    const response = await axiosInstance.get('/access-events');
+    const response = await axiosInstance.get('/dashboard/access-history');
     return response.data;
-    */
-    return null;
   },
 
-  // TODO: Missing backend endpoint for security alerts (ML generated).
-  getSecurityAlerts: async () => {
-    // Placeholder function.
-    /*
-    const response = await axiosInstance.get('/alerts');
-    return response.data;
-    */
-    return null;
-  }
+  // No dedicated backend Security Alerts endpoint exists yet.
+  // Keep this empty rather than inventing security data or a fake API.
+  getSecurityAlerts: async () => null,
 };
 
 export default dashboardService;

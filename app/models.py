@@ -141,3 +141,73 @@ class AccessEvent(db.Model):
     risk_score = db.Column(db.Float, nullable=True)
 
     user = db.relationship("User", backref="access_events")
+
+class OtpChallenge(db.Model):
+    """One Zero Trust step-up OTP challenge.
+
+    The plaintext OTP is never stored. ``otp_hash`` contains only the
+    password-style hash used during verification.
+
+    ``verified_at`` also acts as the start time of the temporary
+    resource-scoped step-up grant.
+    """
+
+    __tablename__ = "otp_challenges"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+    )
+
+    session_id = db.Column(
+        db.String(64),
+        db.ForeignKey("sessions.session_id"),
+        nullable=False,
+        index=True,
+    )
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id"),
+        nullable=False,
+        index=True,
+    )
+
+    resource = db.Column(
+        db.String(100),
+        nullable=False,
+        index=True,
+    )
+
+    otp_hash = db.Column(
+        db.String(255),
+        nullable=False,
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+
+    expires_at = db.Column(
+        db.DateTime,
+        nullable=False,
+    )
+
+    failed_attempts = db.Column(
+        db.Integer,
+        default=0,
+        nullable=False,
+    )
+
+    max_attempts = db.Column(
+        db.Integer,
+        default=5,
+        nullable=False,
+    )
+
+    verified_at = db.Column(
+        db.DateTime,
+        nullable=True,
+    )

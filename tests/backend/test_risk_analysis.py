@@ -11,6 +11,17 @@ from ml.explainability.shap.contracts import (
 from app.services.risk_analysis import analyze_operational_access
 
 
+@pytest.fixture(autouse=True)
+def _stub_behavioral_clustering(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "app.services.risk_analysis.cluster_operational_record",
+        lambda sample, bundle_path=None: {
+            "cluster_id": 1,
+            "archetype_name": "Routine Behavioral Activity",
+        },
+    )
+
+
 def _sample_record() -> dict[str, object]:
     return {
         "role": "employee",
@@ -115,6 +126,10 @@ def test_analysis_uses_exact_same_record_for_rf_and_shap(
             "probability_low": 0.05,
             "probability_medium": 0.10,
             "probability_high": 0.85,
+        },
+        "behavioral_cluster": {
+            "cluster_id": 1,
+            "archetype_name": "Routine Behavioral Activity",
         },
         "explanation": {
             "explanation": {

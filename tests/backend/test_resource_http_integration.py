@@ -135,6 +135,29 @@ def test_authenticated_resource_request_runs_real_rf_and_shap(
 
     analysis = observed["analysis"]
 
+    assert set(
+        analysis["behavioral_cluster"]
+    ) == {
+        "cluster_id",
+        "archetype_name",
+    }
+
+    assert analysis["behavioral_cluster"]["cluster_id"] in {
+        0,
+        1,
+    }
+
+    expected_archetypes = {
+        0: "Elevated Behavioral Activity",
+        1: "Routine Behavioral Activity",
+    }
+
+    assert analysis["behavioral_cluster"]["archetype_name"] == (
+        expected_archetypes[
+            analysis["behavioral_cluster"]["cluster_id"]
+        ]
+    )
+
     assert analysis["prediction"]["predicted_risk"] in {
         "low",
         "medium",
@@ -170,6 +193,12 @@ def test_authenticated_resource_request_runs_real_rf_and_shap(
         assert len(login_events) == 1
         assert login_events[0].success is True
         assert login_events[0].session_id == session_id
+
+        assert login_events[0].cluster_id == (
+            analysis["behavioral_cluster"]["cluster_id"]
+        )
+
+        assert login_events[0].action_taken is None
 
         session_row = Session.query.filter_by(
             session_id=session_id

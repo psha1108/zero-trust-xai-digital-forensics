@@ -130,7 +130,29 @@ def test_database_to_random_forest_to_shap_pipeline(
         assert len(result["features"]) == 14
 
         prediction = result["prediction"]
+        behavioral_cluster = result["behavioral_cluster"]
         explanation = result["explanation"]
+
+        assert set(behavioral_cluster) == {
+            "cluster_id",
+            "archetype_name",
+        }
+
+        assert behavioral_cluster["cluster_id"] in {
+            0,
+            1,
+        }
+
+        expected_archetypes = {
+            0: "Elevated Behavioral Activity",
+            1: "Routine Behavioral Activity",
+        }
+
+        assert behavioral_cluster["archetype_name"] == (
+            expected_archetypes[
+                behavioral_cluster["cluster_id"]
+            ]
+        )
 
         assert prediction["predicted_risk"] in {
             "low",
@@ -174,3 +196,27 @@ def test_database_to_random_forest_to_shap_pipeline(
 
         assert isinstance(serialized, str)
         assert serialized
+
+        db.session.expire_all()
+
+        persisted_login_event = db.session.get(
+            LoginEvent,
+            current_login.id,
+        )
+
+        persisted_access_event = db.session.get(
+            AccessEvent,
+            current_access.id,
+        )
+
+        assert persisted_login_event is not None
+        assert persisted_access_event is not None
+
+        assert persisted_login_event.cluster_id == (
+            behavioral_cluster["cluster_id"]
+        )
+
+        # Behavioral clustering must not become a policy decision.
+        assert persisted_login_event.action_taken is None
+        assert persisted_access_event.decision is None
+        assert persisted_access_event.risk_score is None

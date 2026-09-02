@@ -5,6 +5,10 @@ from flask_login import current_user, login_required
 
 from app.extensions import db
 from app.models import AccessEvent, Session
+from app.services.otp_service import (
+    create_otp_challenge,
+    has_valid_otp_grant,
+)
 from app.services.policy_enforcement import apply_zero_trust_policy
 from app.services.risk_analysis import analyze_operational_access
 from app.utils.fingerprint import get_device_fingerprint
@@ -295,13 +299,31 @@ def _log_analyze_and_enforce_access(
     )
 
 
+def _successful_resource_response(
+    resource_key: str,
+):
+    """Return the existing successful protected-resource payload."""
+
+    title, message = RESOURCE_MESSAGES[
+        resource_key
+    ]
+
+    return jsonify({
+        "title": title,
+        "sensitivity": RESOURCE_SENSITIVITY[
+            resource_key
+        ],
+        "message": message,
+    }), 200
+
+
 def _resource_response(
     resource_key: str,
 ):
-    """Apply Zero Trust before releasing a protected resource."""
+    """Apply Zero Trust and satisfy OTP only with a valid grant."""
 
     (
-        _event,
+        event,
         _analysis,
         policy_result,
     ) = _log_analyze_and_enforce_access(
@@ -313,6 +335,22 @@ def _resource_response(
     ]
 
     if action == "OTP":
+        if has_valid_otp_grant(
+            session_id=event.session_id,
+            user_id=current_user.id,
+            resource=resource_key,
+        ):
+            return _successful_resource_response(
+                resource_key
+            )
+
+        create_otp_challenge(
+            session_id=event.session_id,
+            user_id=current_user.id,
+            resource=resource_key,
+            delivery_target=current_user.email,
+        )
+
         return jsonify({
             "error": "OTP verification required.",
             "policy_action": "OTP",
@@ -340,17 +378,9 @@ def _resource_response(
             f"Unsupported Zero Trust policy action: {action}"
         )
 
-    title, message = RESOURCE_MESSAGES[
+    return _successful_resource_response(
         resource_key
-    ]
-
-    return jsonify({
-        "title": title,
-        "sensitivity": RESOURCE_SENSITIVITY[
-            resource_key
-        ],
-        "message": message,
-    }), 200
+    )
 
 
 @resources_bp.route(

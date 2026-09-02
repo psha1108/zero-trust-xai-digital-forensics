@@ -6,6 +6,7 @@ from app.extensions import db
 from app.models import AccessEvent, Session
 from app.services.risk_analysis import analyze_operational_access
 from app.utils.fingerprint import get_device_fingerprint
+from app.utils.forensics_utils import preserve_evidence
 
 resources_bp = Blueprint("resources", __name__, url_prefix="/api/resources")
 
@@ -79,7 +80,7 @@ def _detect_and_update_session_changes(session_id: str, current_ip: str, current
     return ip_changed, device_changed
 
 
-def _log_access(resource: str) -> AccessEvent:
+def _log_access(resource: str, decision: str = None) -> AccessEvent:
     sensitivity = RESOURCE_SENSITIVITY.get(resource, "low")
     device_fp = get_device_fingerprint(request.headers.get("User-Agent", ""))
     ip = request.remote_addr or "unknown"
@@ -99,8 +100,30 @@ def _log_access(resource: str) -> AccessEvent:
         privilege_mismatch=_is_privilege_mismatch(resource),
         ip_changed=ip_changed,
         device_changed=device_changed,
+        decision=decision,
     )
     db.session.add(event)
+    db.session.flush()
+
+    session_row = Session.query.filter_by(session_id=session_id).first()
+    anchor_login_id = session_row.login_event_id if session_row else None
+    
+    if anchor_login_id:
+        details = {
+            "event_type": "AccessEvent",
+            "access_event_id": event.id,
+            "session_id": event.session_id,
+            "user_id": event.user_id,
+            "resource": event.resource,
+            "timestamp": event.timestamp.isoformat(),
+            "ip_address": event.ip_address,
+            "device_fingerprint": event.device_fingerprint,
+            "privilege_mismatch": event.privilege_mismatch,
+            "ip_changed": event.ip_changed,
+            "device_changed": event.device_changed
+        }
+        preserve_evidence(anchor_login_id, details)
+
     db.session.commit()
     return event
 
@@ -122,7 +145,9 @@ def _log_and_analyze_access(resource: str):
 
 
 def _resource_response(resource_key: str):
+
     _log_and_analyze_access(resource_key)
+
     title, message = RESOURCE_MESSAGES[resource_key]
     return jsonify({
         "title": title,
@@ -153,6 +178,6 @@ def finance_page():
 @login_required
 def admin_page():
     if current_user.role != "admin":
-        _log_and_analyze_access("admin_page")  # still logged — privilege_mismatch will be True
+        _log_and_analyze_access("admin_page")
         return jsonify({"error": "Forbidden — admin role required."}), 403
     return _resource_response("admin_page")

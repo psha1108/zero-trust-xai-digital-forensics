@@ -1,0 +1,403 @@
+{
+  "archetype_semantics": "behavioral context only; cluster IDs are not risk classes or access-control decisions",
+  "candidate_k_values": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "candidates": [
+    {
+      "fit_inertia": 6082.005907206889,
+      "fit_metrics": {
+        "calinski_harabasz_score": 141.27273448216377,
+        "cluster_sizes": {
+          "0": 62,
+          "1": 492
+        },
+        "davies_bouldin_index": 1.5528407442225247,
+        "eligible": true,
+        "minimum_cluster_size": 62,
+        "observed_cluster_count": 2,
+        "silhouette_score": 0.46709475819897384
+      },
+      "k": 2,
+      "parameters": {
+        "algorithm": "lloyd",
+        "n_clusters": 2,
+        "n_init": 20,
+        "random_state": 42
+      },
+      "validation_metrics": {
+        "calinski_harabasz_score": 36.74196071591374,
+        "cluster_sizes": {
+          "0": 15,
+          "1": 123
+        },
+        "davies_bouldin_index": 1.4682486428009571,
+        "eligible": true,
+        "minimum_cluster_size": 15,
+        "observed_cluster_count": 2,
+        "silhouette_score": 0.4619014723633992
+      }
+    },
+    {
+      "fit_inertia": 5383.6037553729175,
+      "fit_metrics": {
+        "calinski_harabasz_score": 115.39525259344096,
+        "cluster_sizes": {
+          "0": 375,
+          "1": 59,
+          "2": 120
+        },
+        "davies_bouldin_index": 1.8904747059964802,
+        "eligible": true,
+        "minimum_cluster_size": 59,
+        "observed_cluster_count": 3,
+        "silhouette_score": 0.22695299648908204
+      },
+      "k": 3,
+      "parameters": {
+        "algorithm": "lloyd",
+        "n_clusters": 3,
+        "n_init": 20,
+        "random_state": 42
+      },
+      "validation_metrics": {
+        "calinski_harabasz_score": 32.02765850353997,
+        "cluster_sizes": {
+          "0": 93,
+          "1": 13,
+          "2": 32
+        },
+        "davies_bouldin_index": 1.7586246785968322,
+        "eligible": true,
+        "minimum_cluster_size": 13,
+        "observed_cluster_count": 3,
+        "silhouette_score": 0.2434236207704739
+      }
+    },
+    {
+      "fit_inertia": 4839.700432478819,
+      "fit_metrics": {
+        "calinski_harabasz_score": 106.0242272199336,
+        "cluster_sizes": {
+          "0": 375,
+          "1": 55,
+          "2": 120,
+          "3": 4
+        },
+        "davies_bouldin_index": 1.5657056997855359,
+        "eligible": true,
+        "minimum_cluster_size": 4,
+        "observed_cluster_count": 4,
+        "silhouette_score": 0.23658401500297815
+      },
+      "k": 4,
+      "parameters": {
+        "algorithm": "lloyd",
+        "n_clusters": 4,
+        "n_init": 20,
+        "random_state": 42
+      },
+      "validation_metrics": {
+        "calinski_harabasz_score": 37.09978661706941,
+        "cluster_sizes": {
+          "0": 93,
+          "1": 11,
+          "2": 32,
+          "3": 2
+        },
+        "davies_bouldin_index": 1.3995556638190316,
+        "eligible": true,
+        "minimum_cluster_size": 2,
+        "observed_cluster_count": 4,
+        "silhouette_score": 0.2642487106885486
+      }
+    },
+    {
+      "fit_inertia": 4361.795918833714,
+      "fit_metrics": {
+        "calinski_harabasz_score": 103.10817150211189,
+        "cluster_sizes": {
+          "0": 376,
+          "1": 45,
+          "2": 118,
+          "3": 4,
+          "4": 11
+        },
+        "davies_bouldin_index": 1.4433811415534614,
+        "eligible": true,
+        "minimum_cluster_size": 4,
+        "observed_cluster_count": 5,
+        "silhouette_score": 0.24908249790370063
+      },
+      "k": 5,
+      "parameters": {
+        "algorithm": "lloyd",
+        "n_clusters": 5,
+        "n_init": 20,
+        "random_state": 42
+      },
+      "validation_metrics": {
+        "calinski_harabasz_score": 36.30206991625128,
+        "cluster_sizes": {
+          "0": 93,
+          "1": 13,
+          "2": 30,
+          "3": 2
+        },
+        "davies_bouldin_index": 1.4316032421163678,
+        "eligible": false,
+        "minimum_cluster_size": 2,
+        "observed_cluster_count": 4,
+        "silhouette_score": 0.25353981545990584
+      }
+    },
+    {
+      "fit_inertia": 3928.2608655741587,
+      "fit_metrics": {
+        "calinski_harabasz_score": 103.51897262027467,
+        "cluster_sizes": {
+          "0": 280,
+          "1": 89,
+          "2": 45,
+          "3": 125,
+          "4": 4,
+          "5": 11
+        },
+        "davies_bouldin_index": 1.4462692585133048,
+        "eligible": true,
+        "minimum_cluster_size": 4,
+        "observed_cluster_count": 6,
+        "silhouette_score": 0.18010501711595883
+      },
+      "k": 6,
+      "parameters": {
+        "algorithm": "lloyd",
+        "n_clusters": 6,
+        "n_init": 20,
+        "random_state": 42
+      },
+      "validation_metrics": {
+        "calinski_harabasz_score": 33.93112025749839,
+        "cluster_sizes": {
+          "0": 67,
+          "1": 21,
+          "2": 13,
+          "3": 35,
+          "4": 2
+        },
+        "davies_bouldin_index": 1.4446497027857708,
+        "eligible": false,
+        "minimum_cluster_size": 2,
+        "observed_cluster_count": 5,
+        "silhouette_score": 0.1819264082371475
+      }
+    },
+    {
+      "fit_inertia": 3616.688777206976,
+      "fit_metrics": {
+        "calinski_harabasz_score": 101.38036045675027,
+        "cluster_sizes": {
+          "0": 84,
+          "1": 83,
+          "2": 201,
+          "3": 4,
+          "4": 126,
+          "5": 45,
+          "6": 11
+        },
+        "davies_bouldin_index": 1.4186241923937335,
+        "eligible": true,
+        "minimum_cluster_size": 4,
+        "observed_cluster_count": 7,
+        "silhouette_score": 0.20275862512168533
+      },
+      "k": 7,
+      "parameters": {
+        "algorithm": "lloyd",
+        "n_clusters": 7,
+        "n_init": 20,
+        "random_state": 42
+      },
+      "validation_metrics": {
+        "calinski_harabasz_score": 31.82747993495628,
+        "cluster_sizes": {
+          "0": 20,
+          "1": 22,
+          "2": 46,
+          "3": 2,
+          "4": 35,
+          "5": 13
+        },
+        "davies_bouldin_index": 1.3869748392404155,
+        "eligible": false,
+        "minimum_cluster_size": 2,
+        "observed_cluster_count": 6,
+        "silhouette_score": 0.19466637857049224
+      }
+    },
+    {
+      "fit_inertia": 3404.4000473962183,
+      "fit_metrics": {
+        "calinski_harabasz_score": 97.0112210937057,
+        "cluster_sizes": {
+          "0": 85,
+          "1": 123,
+          "2": 11,
+          "3": 59,
+          "4": 44,
+          "5": 155,
+          "6": 4,
+          "7": 73
+        },
+        "davies_bouldin_index": 1.3944065155485146,
+        "eligible": true,
+        "minimum_cluster_size": 4,
+        "observed_cluster_count": 8,
+        "silhouette_score": 0.19898076096918343
+      },
+      "k": 8,
+      "parameters": {
+        "algorithm": "lloyd",
+        "n_clusters": 8,
+        "n_init": 20,
+        "random_state": 42
+      },
+      "validation_metrics": {
+        "calinski_harabasz_score": 30.041518981045094,
+        "cluster_sizes": {
+          "0": 20,
+          "1": 31,
+          "3": 16,
+          "4": 12,
+          "5": 36,
+          "6": 2,
+          "7": 21
+        },
+        "davies_bouldin_index": 1.419760376816517,
+        "eligible": false,
+        "minimum_cluster_size": 2,
+        "observed_cluster_count": 7,
+        "silhouette_score": 0.18093780245582064
+      }
+    }
+  ],
+  "dataset": "ml_training_dataset.csv",
+  "dataset_sha256": "6447c2bdbbc939eaf97d21bc5b2bd70a290a067d9bcf5847511c1c47c9ac869d",
+  "development_archetypes": {
+    "0": "Elevated Behavioral Activity",
+    "1": "Routine Behavioral Activity"
+  },
+  "development_partitions": {
+    "fit": {
+      "rows": 554,
+      "users": 32
+    },
+    "user_overlap": 0,
+    "validation": {
+      "rows": 138,
+      "users": 8
+    }
+  },
+  "kmeans_parameters": {
+    "algorithm": "lloyd",
+    "n_init": 20,
+    "random_state": 42
+  },
+  "model_name": "operational_kmeans_behavioral_clustering",
+  "model_type": "KMeans",
+  "report_schema_version": 1,
+  "risk_label_used_for_selection": false,
+  "risk_label_used_for_training": false,
+  "scenario_type_used_for_selection": false,
+  "scenario_type_used_for_training": false,
+  "selected_candidate": {
+    "fit_inertia": 6082.005907206889,
+    "fit_metrics": {
+      "calinski_harabasz_score": 141.27273448216377,
+      "cluster_sizes": {
+        "0": 62,
+        "1": 492
+      },
+      "davies_bouldin_index": 1.5528407442225247,
+      "eligible": true,
+      "minimum_cluster_size": 62,
+      "observed_cluster_count": 2,
+      "silhouette_score": 0.46709475819897384
+    },
+    "k": 2,
+    "parameters": {
+      "algorithm": "lloyd",
+      "n_clusters": 2,
+      "n_init": 20,
+      "random_state": 42
+    },
+    "validation_metrics": {
+      "calinski_harabasz_score": 36.74196071591374,
+      "cluster_sizes": {
+        "0": 15,
+        "1": 123
+      },
+      "davies_bouldin_index": 1.4682486428009571,
+      "eligible": true,
+      "minimum_cluster_size": 15,
+      "observed_cluster_count": 2,
+      "silhouette_score": 0.4619014723633992
+    }
+  },
+  "selected_k": 2,
+  "selection_metric": "validation_silhouette_score",
+  "selection_tie_breakers": [
+    "lower_validation_davies_bouldin_index",
+    "higher_validation_calinski_harabasz_score",
+    "smaller_k"
+  ],
+  "source_feature_count": 14,
+  "source_features": [
+    "role",
+    "login_hour",
+    "is_working_hour",
+    "failed_attempt_count",
+    "is_new_ip",
+    "is_new_device",
+    "is_unusual_time",
+    "session_duration_minutes",
+    "resource_sensitivity_score",
+    "access_count_5min",
+    "unauthorized_access_attempt",
+    "ip_changed_during_session",
+    "device_changed_during_session",
+    "sensitive_resource_access_count"
+  ],
+  "split_assignments": "isolation_forest_split_assignments.csv",
+  "split_assignments_sha256": "3b04239a1bade6f6815d472b5f6b5b5fe98df7eeabb1ccbc264ceefcbb17c138",
+  "task": "unsupervised_behavioral_clustering",
+  "test_partition_used_for_selection": false,
+  "test_rows_evaluated": 0,
+  "transformed_feature_count": 18,
+  "transformed_features": [
+    "role_admin",
+    "role_employee",
+    "role_finance_user",
+    "role_guest",
+    "role_hr_user",
+    "login_hour",
+    "is_working_hour",
+    "failed_attempt_count",
+    "is_new_ip",
+    "is_new_device",
+    "is_unusual_time",
+    "session_duration_minutes",
+    "resource_sensitivity_score",
+    "access_count_5min",
+    "unauthorized_access_attempt",
+    "ip_changed_during_session",
+    "device_changed_during_session",
+    "sensitive_resource_access_count"
+  ]
+}

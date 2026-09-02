@@ -44,6 +44,19 @@ RESOURCE_VIEW_PATH = (
 )
 
 
+VITE_CONFIG_PATH = (
+    ROOT
+    / "frontend"
+    / "vite.config.js"
+)
+
+APP_INIT_PATH = (
+    ROOT
+    / "app"
+    / "__init__.py"
+)
+
+
 def _read(path: Path) -> str:
     return path.read_text(
         encoding="utf-8"
@@ -102,3 +115,87 @@ def test_resource_view_renders_accessible_six_digit_otp_ui() -> None:
     assert "maxLength={6}" in source
     assert "Verify OTP" in source
     assert "otpCode" in source
+
+def test_axios_uses_relative_api_path() -> None:
+    source = _read(
+        AXIOS_PATH
+    )
+
+    assert "baseURL: '/api'" in source
+
+    assert (
+        "localhost:5000/api"
+        not in source
+    )
+
+
+def test_vite_exposes_dev_server_and_proxies_api() -> None:
+    source = _read(
+        VITE_CONFIG_PATH
+    )
+
+    scheme = "http" + "://"
+
+    target = (
+        scheme
+        + "127.0.0.1:5000"
+    )
+
+    markdown_target = (
+        f"[{target}]"
+        f"({target})"
+    )
+
+    assert "host: true" in source
+    assert "port: 5173" in source
+    assert "'/api'" in source
+
+    assert (
+        f"target: '{target}'"
+        in source
+    )
+
+    assert (
+        markdown_target
+        not in source
+    )
+
+
+def test_flask_cors_urls_are_plain_urls() -> None:
+    source = _read(
+        APP_INIT_PATH
+    )
+
+    scheme = "http" + "://"
+
+    local_3000 = (
+        scheme
+        + "localhost:3000"
+    )
+
+    local_5173 = (
+        scheme
+        + "localhost:5173"
+    )
+
+    assert (
+        f'"{local_3000}"'
+        in source
+    )
+
+    assert (
+        f'"{local_5173}"'
+        in source
+    )
+
+    assert (
+        f"[{local_3000}]"
+        f"({local_3000})"
+        not in source
+    )
+
+    assert (
+        f"[{local_5173}]"
+        f"({local_5173})"
+        not in source
+    )

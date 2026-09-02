@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Flask REST API used by the React frontend.
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: '/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

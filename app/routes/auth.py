@@ -4,6 +4,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 
 from app.extensions import db
 from app.models import User, LoginEvent, Session
+from app.services.otp_service import verify_otp_code
 from app.utils.fingerprint import get_device_fingerprint, generate_session_id
 from app.utils.forensics_utils import preserve_evidence
 
@@ -126,6 +127,82 @@ def login():
         }), 200
 
     return jsonify({"error": "Invalid username or password."}), 401
+
+
+@auth_bp.route("/otp/verify", methods=["POST"])
+@login_required
+def verify_otp():
+    """Verify the active session's pending Zero Trust OTP."""
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    otp_code = data.get(
+        "otp_code"
+    )
+
+    if (
+        not isinstance(otp_code, str)
+        or len(otp_code) != 6
+        or not otp_code.isascii()
+        or not otp_code.isdigit()
+    ):
+        return jsonify({
+            "error": "A 6-digit OTP is required.",
+        }), 400
+
+    session_id = flask_session.get(
+        "app_session_id"
+    )
+
+    if not session_id:
+        return jsonify({
+            "error": "Session invalid. Please log in again.",
+        }), 401
+
+    result = verify_otp_code(
+        session_id=session_id,
+        user_id=current_user.id,
+        otp_code=otp_code,
+    )
+
+    status = result[
+        "status"
+    ]
+
+    if result["verified"] is True:
+        return jsonify({
+            "message": "OTP verified.",
+            "verified": True,
+        }), 200
+
+    if status == "invalid":
+        return jsonify({
+            "error": "Invalid OTP.",
+            "verified": False,
+            "attempts_remaining": result[
+                "attempts_remaining"
+            ],
+        }), 400
+
+    if status == "locked":
+        return jsonify({
+            "error": "OTP challenge locked.",
+            "verified": False,
+            "attempts_remaining": 0,
+        }), 423
+
+    if status == "expired":
+        return jsonify({
+            "error": "OTP challenge expired.",
+            "verified": False,
+            "attempts_remaining": 0,
+        }), 410
+
+    raise RuntimeError(
+        f"Unsupported OTP verification status: {status}"
+    )
 
 
 @auth_bp.route("/logout", methods=["POST"])

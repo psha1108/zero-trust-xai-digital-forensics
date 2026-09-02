@@ -5,9 +5,12 @@ from config import Config
 from app.extensions import db, login_manager
 
 
-def create_app():
+def create_app(test_config=None):
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    if test_config:
+        app.config.update(test_config)
 
     # Allow the React dev server to call this API with cookies included.
     # Add both common React dev ports (CRA=3000, Vite=5173) so either works.
@@ -20,6 +23,11 @@ def create_app():
     # Lax works for local dev without needing HTTPS. In production, this
     # should become 'None' + SESSION_COOKIE_SECURE=True, served over HTTPS.
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+    import os
+    if os.environ.get("TRUST_REVERSE_PROXY", "false").lower() == "true":
+        from werkzeug.middleware.proxy_fix import ProxyFix
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     db.init_app(app)
     login_manager.init_app(app)
@@ -65,9 +73,11 @@ def create_app():
     from app.routes.auth import auth_bp
     from app.routes.dashboard import dashboard_bp
     from app.routes.resources import resources_bp
+    from app.routes.forensics import forensics_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(resources_bp)
+    app.register_blueprint(forensics_bp)
 
     return app

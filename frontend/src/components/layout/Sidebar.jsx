@@ -1,8 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import './Layout.css';
 
 const Sidebar = () => {
+  const { user } = useAuth();
+  
   return (
     <aside className="sidebar">
       <nav className="sidebar-nav">
@@ -37,9 +40,15 @@ const Sidebar = () => {
           <button className="nav-link disabled" title="Coming Soon" disabled>
             ML Analytics
           </button>
-          <button className="nav-link disabled" title="Coming Soon" disabled>
-            Digital Forensics
-          </button>
+          {user && user.role === 'admin' ? (
+            <NavLink to="/forensics" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+              Digital Forensics
+            </NavLink>
+          ) : (
+            <button className="nav-link disabled" title="Admin only" disabled>
+              Digital Forensics
+            </button>
+          )}
         </div>
       </nav>
     </aside>

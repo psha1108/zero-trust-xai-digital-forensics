@@ -11,6 +11,10 @@ import NormalResource from './pages/resources/NormalResource';
 import HrResource from './pages/resources/HrResource';
 import FinanceResource from './pages/resources/FinanceResource';
 import AdminResource from './pages/resources/AdminResource';
+import ForensicsDashboard from './pages/forensics/ForensicsDashboard';
+import EvidenceLogView from './pages/forensics/EvidenceLogView';
+import TimelineView from './pages/forensics/TimelineView';
+import ForensicReport from './pages/forensics/ForensicReport';
 import './index.css'; // Standard CSS
 
 const NotFound = () => <div>404 - Not Found</div>;
@@ -34,6 +38,12 @@ function App() {
               <Route path="/resources/hr" element={<HrResource />} />
               <Route path="/resources/finance" element={<FinanceResource />} />
               <Route path="/resources/admin" element={<AdminResource />} />
+              
+              {/* Forensics Routes */}
+              <Route path="/forensics" element={<ForensicsDashboard />} />
+              <Route path="/forensics/evidence" element={<EvidenceLogView />} />
+              <Route path="/forensics/timeline/:sessionId" element={<TimelineView />} />
+              <Route path="/forensics/report/:sessionId" element={<ForensicReport />} />
             </Route>
           </Route>
 

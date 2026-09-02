@@ -5,6 +5,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from app.extensions import db
 from app.models import User, LoginEvent, Session
 from app.utils.fingerprint import get_device_fingerprint, generate_session_id
+from app.utils.forensics_utils import preserve_evidence
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -19,6 +20,19 @@ def _log_login_event(username_attempted: str, success: bool, user_id: int | None
         success=success,
     )
     db.session.add(event)
+    db.session.flush()
+    
+    details = {
+        "event_type": "LoginEvent",
+        "login_event_id": event.id,
+        "user_id": event.user_id,
+        "username_attempted": event.username_attempted,
+        "timestamp": event.timestamp.isoformat(),
+        "ip_address": event.ip_address,
+        "device_info": event.device_info,
+        "success": event.success
+    }
+    preserve_evidence(event.id, details)
     db.session.commit()
     return event
 

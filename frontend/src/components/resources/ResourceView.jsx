@@ -21,24 +21,17 @@ const isOtpChallenge = (err) => {
 
 const getErrorMessage = (err) => {
   const response = err?.response;
-  const payload = response?.data;
 
   if (response?.status === 403) {
     return (
-      payload?.error ||
       'Your account does not have the required permissions to access this resource.'
     );
   }
 
   if (response?.status === 401) {
     return (
-      payload?.error ||
       'Your current session cannot access this resource.'
     );
-  }
-
-  if (payload?.error) {
-    return payload.error;
   }
 
   return 'The requested company resource could not be loaded.';

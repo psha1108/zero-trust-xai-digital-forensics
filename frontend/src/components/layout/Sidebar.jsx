@@ -6,7 +6,11 @@ import { useAuth } from '../../hooks/useAuth';
 import './Layout.css';
 
 const Sidebar = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+  };
 
   const linkClass = ({ isActive }) =>
     `nav-link ${isActive ? 'active' : ''}`;
@@ -118,6 +122,15 @@ const Sidebar = () => {
             <span aria-hidden="true">?</span>
             <span>My Sessions</span>
           </NavLink>
+
+          <button
+            className="nav-link sidebar-logout"
+            type="button"
+            onClick={handleLogout}
+          >
+            <span aria-hidden="true">?</span>
+            <span>Logout</span>
+          </button>
 
           {isAdmin && (
             <NavLink

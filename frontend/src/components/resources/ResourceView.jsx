@@ -1,6 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, {
+  useEffect,
+  useState,
+} from 'react';
+
 import Card from '../dashboard/Card';
 import authService from '../../services/authService';
+
 import './ResourceView.css';
 
 const isOtpChallenge = (err) => {
@@ -21,7 +26,14 @@ const getErrorMessage = (err) => {
   if (response?.status === 403) {
     return (
       payload?.error ||
-      '403 Forbidden: You do not have clearance to access this resource.'
+      'Your account does not have the required permissions to access this resource.'
+    );
+  }
+
+  if (response?.status === 401) {
+    return (
+      payload?.error ||
+      'Your current session cannot access this resource.'
     );
   }
 
@@ -29,10 +41,15 @@ const getErrorMessage = (err) => {
     return payload.error;
   }
 
-  return 'Secure connection failed. Unable to retrieve resource.';
+  return 'The requested company resource could not be loaded.';
 };
 
-const ResourceView = ({ fetchFn, pageName }) => {
+const ResourceView = ({
+  fetchFn,
+  pageName,
+  subtitle,
+  children,
+}) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -42,13 +59,37 @@ const ResourceView = ({ fetchFn, pageName }) => {
   const [otpError, setOtpError] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
 
+  const loadResource = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const responseData = await fetchFn();
+
+      setData(responseData);
+      setOtpRequired(false);
+      setOtpCode('');
+      setOtpError('');
+    } catch (err) {
+      setData(null);
+
+      if (isOtpChallenge(err)) {
+        setError('');
+        setOtpRequired(true);
+        setOtpError('');
+      } else {
+        setOtpRequired(false);
+        setError(getErrorMessage(err));
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     let active = true;
 
-    const loadResource = async () => {
-      setLoading(true);
-      setError('');
-
+    const start = async () => {
       try {
         const responseData = await fetchFn();
 
@@ -60,18 +101,19 @@ const ResourceView = ({ fetchFn, pageName }) => {
         setOtpRequired(false);
         setOtpCode('');
         setOtpError('');
+        setError('');
       } catch (err) {
         if (!active) {
           return;
         }
 
+        setData(null);
+
         if (isOtpChallenge(err)) {
-          setData(null);
           setError('');
           setOtpRequired(true);
           setOtpError('');
         } else {
-          setData(null);
           setOtpRequired(false);
           setError(getErrorMessage(err));
         }
@@ -82,7 +124,7 @@ const ResourceView = ({ fetchFn, pageName }) => {
       }
     };
 
-    loadResource();
+    start();
 
     return () => {
       active = false;
@@ -105,7 +147,9 @@ const ResourceView = ({ fetchFn, pageName }) => {
     event.preventDefault();
 
     if (!/^\d{6}$/.test(otpCode)) {
-      setOtpError('Enter the 6-digit OTP.');
+      setOtpError(
+        'Enter the 6-digit verification code.'
+      );
       return;
     }
 
@@ -113,49 +157,23 @@ const ResourceView = ({ fetchFn, pageName }) => {
     setOtpError('');
     setError('');
 
-    let verification;
-
     try {
-      verification = await authService.verifyOtp(otpCode);
+      const verification =
+        await authService.verifyOtp(otpCode);
+
+      if (verification?.verified !== true) {
+        setOtpError(
+          'Verification could not be completed.'
+        );
+        return;
+      }
+
+      await loadResource();
     } catch (err) {
       setOtpError(
         err?.response?.data?.error ||
-        'OTP verification failed.'
+        'Verification could not be completed.'
       );
-      setOtpLoading(false);
-      return;
-    }
-
-    if (verification?.verified !== true) {
-      setOtpError('OTP verification failed.');
-      setOtpLoading(false);
-      return;
-    }
-
-    try {
-      // Retry the exact protected resource. Flask remains responsible
-      // for re-running ML analysis and Zero Trust policy enforcement.
-      const responseData = await fetchFn();
-
-      setData(responseData);
-      setOtpRequired(false);
-      setOtpCode('');
-      setOtpError('');
-      setError('');
-    } catch (err) {
-      setData(null);
-
-      if (isOtpChallenge(err)) {
-        setOtpRequired(true);
-        setOtpError(
-          err?.response?.data?.error ||
-          'OTP verification is still required.'
-        );
-      } else {
-        // A verified OTP must never override Restrict or Block.
-        setOtpRequired(false);
-        setError(getErrorMessage(err));
-      }
     } finally {
       setOtpLoading(false);
     }
@@ -163,25 +181,42 @@ const ResourceView = ({ fetchFn, pageName }) => {
 
   return (
     <div className="resource-view-container">
-      <h1 className="page-title">{pageName}</h1>
+      <div className="page-heading-block">
+        <p className="page-eyebrow">
+          ACME Technologies
+        </p>
 
-      <Card>
-        {loading ? (
+        <h1 className="page-title">
+          {pageName}
+        </h1>
+
+        {subtitle && (
+          <p className="page-subtitle">
+            {subtitle}
+          </p>
+        )}
+      </div>
+
+      {loading ? (
+        <Card>
           <div className="placeholder-text">
-            Establishing secure connection...
+            Loading company resource...
           </div>
-        ) : otpRequired ? (
-          <div className="otp-step-up" aria-live="polite">
-            <div className="otp-step-up-header">
-              <h2 className="resource-title">
-                Additional Verification Required
-              </h2>
+        </Card>
+      ) : otpRequired ? (
+        <Card>
+          <div
+            className="otp-step-up"
+            aria-live="polite"
+          >
+            <h2 className="resource-title">
+              Additional Verification Required
+            </h2>
 
-              <p className="resource-message">
-                Zero Trust policy requires a one-time password before
-                this resource can be accessed.
-              </p>
-            </div>
+            <p className="resource-message">
+              Please complete the one-time verification
+              step to continue to this company resource.
+            </p>
 
             {otpError && (
               <div
@@ -200,7 +235,7 @@ const ResourceView = ({ fetchFn, pageName }) => {
                 className="otp-label"
                 htmlFor="otpCode"
               >
-                6-digit OTP
+                6-digit verification code
               </label>
 
               <input
@@ -215,12 +250,6 @@ const ResourceView = ({ fetchFn, pageName }) => {
                 value={otpCode}
                 onChange={handleOtpChange}
                 disabled={otpLoading}
-                aria-invalid={Boolean(otpError)}
-                aria-describedby={
-                  otpError
-                    ? 'otp-error-message'
-                    : undefined
-                }
                 placeholder="000000"
               />
 
@@ -234,52 +263,42 @@ const ResourceView = ({ fetchFn, pageName }) => {
               >
                 {otpLoading
                   ? 'Verifying...'
-                  : 'Verify OTP'}
+                  : 'Continue'}
               </button>
             </form>
-
-            {otpError && (
-              <span
-                id="otp-error-message"
-                className="sr-only"
-              >
-                {otpError}
-              </span>
-            )}
           </div>
-        ) : error ? (
+        </Card>
+      ) : error ? (
+        <Card>
           <div
-            className="placeholder-text error-text"
+            className="business-access-denied"
             role="alert"
           >
-            {error}
-          </div>
-        ) : data ? (
-          <div className="resource-data">
-            <h2 className="resource-title">
-              {data.title}
+            <h2>
+              Access Restricted
             </h2>
 
-            <div className="resource-meta">
-              <span className="status-label">
-                Classification:
-              </span>
+            <p>
+              {error}
+            </p>
 
-              <span
-                className={
-                  `status-value uppercase sensitivity-${data.sensitivity}`
-                }
-              >
-                {data.sensitivity}
-              </span>
-            </div>
-
-            <p className="resource-message">
-              {data.message}
+            <p className="muted-text">
+              If you believe you require access,
+              contact your department administrator.
             </p>
           </div>
-        ) : null}
-      </Card>
+        </Card>
+      ) : data ? (
+        <>
+          {children || (
+            <Card title={data.title}>
+              <p>
+                {data.message}
+              </p>
+            </Card>
+          )}
+        </>
+      ) : null}
     </div>
   );
 };

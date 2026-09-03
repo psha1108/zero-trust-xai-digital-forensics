@@ -1,5 +1,5 @@
 import React from 'react';
-import SessionStatusCard from '../../components/dashboard/SessionStatusCard';
+import ActiveSessionsCard from '../../components/dashboard/ActiveSessionsCard';
 import LoginHistoryTable from '../../components/dashboard/LoginHistoryTable';
 import AccessHistoryTable from '../../components/dashboard/AccessHistoryTable';
 import SecurityAlertsCard from '../../components/dashboard/SecurityAlertsCard';
@@ -14,7 +14,7 @@ const Dashboard = () => {
       
       <div className="dashboard-grid">
         {/* 1. Session Status */}
-        <SessionStatusCard />
+        <ActiveSessionsCard />
 
         {/* 4. Security Alerts */}
         <SecurityAlertsCard />

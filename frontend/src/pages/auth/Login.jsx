@@ -52,8 +52,8 @@ const Login = () => {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-header">
-          <h1 className="auth-title">Zero Trust Auth</h1>
-          <p className="auth-subtitle">Secure Gateway Access</p>
+          <h1 className="auth-title">ACME Corporate Portal</h1>
+          <p className="auth-subtitle">Employee and Authorized User Login</p>
         </div>
         
         {error && <div className="auth-error" role="alert">{error}</div>}
@@ -85,7 +85,7 @@ const Login = () => {
         </form>
 
         <div className="auth-footer">
-          Don't have an access clearance? 
+          Don't have a portal account? 
           <Link to="/register" className="auth-link">Register</Link>
         </div>
       </div>

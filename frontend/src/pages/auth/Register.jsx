@@ -111,8 +111,8 @@ const Register = () => {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-header">
-          <h1 className="auth-title">System Enrollment</h1>
-          <p className="auth-subtitle">Register for Secure Access</p>
+          <h1 className="auth-title">Create Portal Account</h1>
+          <p className="auth-subtitle">Register for Corporate Portal Access</p>
         </div>
         
         {serverError && <div className="auth-error" role="alert">{serverError}</div>}
@@ -168,7 +168,7 @@ const Register = () => {
         </form>
 
         <div className="auth-footer">
-          Already have clearance? 
+          Already have an account? 
           <Link to="/login" className="auth-link">Login</Link>
         </div>
       </div>

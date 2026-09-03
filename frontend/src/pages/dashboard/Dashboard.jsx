@@ -1,35 +1,83 @@
 import React from 'react';
-import SessionStatusCard from '../../components/dashboard/SessionStatusCard';
-import LoginHistoryTable from '../../components/dashboard/LoginHistoryTable';
-import AccessHistoryTable from '../../components/dashboard/AccessHistoryTable';
-import SecurityAlertsCard from '../../components/dashboard/SecurityAlertsCard';
-import SecurityStateCard from '../../components/dashboard/SecurityStateCard';
-import DigitalForensicsCard from '../../components/dashboard/DigitalForensicsCard';
+import { Link } from 'react-router-dom';
+
+import Card from '../../components/dashboard/Card';
+import { useAuth } from '../../hooks/useAuth';
+
 import './Dashboard.css';
 
 const Dashboard = () => {
+  const { user } = useAuth();
+
   return (
     <div className="dashboard-container">
-      <h1 className="page-title">Security Overview</h1>
-      
+      <h1 className="page-title">
+        Corporate Portal
+      </h1>
+
       <div className="dashboard-grid">
-        {/* 1. Session Status */}
-        <SessionStatusCard />
+        <Card
+          title="Welcome"
+          className="full-width"
+        >
+          <p>
+            Welcome, <strong>{user?.username || 'User'}</strong>.
+          </p>
 
-        {/* 4. Security Alerts */}
-        <SecurityAlertsCard />
+          <p>
+            Signed-in role:{' '}
+            <strong>{user?.role || 'Not available'}</strong>
+          </p>
 
-        {/* 5. Persisted Security State */}
-        <SecurityStateCard />
+          <p>
+            Use the portal to access organizational
+            documents and resources available to your account.
+          </p>
+        </Card>
 
-        {/* 6. Digital Forensics */}
-        <DigitalForensicsCard />
+        <Card title="General Documents">
+          <p>
+            Access general organizational information
+            and shared documents.
+          </p>
 
-        {/* 2. Recent Login Activity */}
-        <LoginHistoryTable />
+          <Link to="/resources/normal">
+            Open General Documents
+          </Link>
+        </Card>
 
-        {/* 3. Recent Resource Access */}
-        <AccessHistoryTable />
+        <Card title="HR Documents">
+          <p>
+            Access human-resources documents and
+            employee information.
+          </p>
+
+          <Link to="/resources/hr">
+            Open HR Documents
+          </Link>
+        </Card>
+
+        <Card title="Finance Reports">
+          <p>
+            Access finance-related reports and
+            protected financial resources.
+          </p>
+
+          <Link to="/resources/finance">
+            Open Finance Reports
+          </Link>
+        </Card>
+
+        <Card title="Admin Controls">
+          <p>
+            Administrative functions are protected
+            according to your assigned access privileges.
+          </p>
+
+          <Link to="/resources/admin">
+            Open Admin Controls
+          </Link>
+        </Card>
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import resourceService from '../../services/resourceService';
 const HrResource = () => {
   return (
     <ResourceView 
-      pageName="HR Resource Access" 
+      pageName="HR Documents" 
       fetchFn={resourceService.getHrResource} 
     />
   );

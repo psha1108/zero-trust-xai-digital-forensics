@@ -5,7 +5,7 @@ import resourceService from '../../services/resourceService';
 const AdminResource = () => {
   return (
     <ResourceView 
-      pageName="System Administration Access" 
+      pageName="Admin Controls" 
       fetchFn={resourceService.getAdminResource} 
     />
   );

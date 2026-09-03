@@ -5,7 +5,7 @@ import resourceService from '../../services/resourceService';
 const NormalResource = () => {
   return (
     <ResourceView 
-      pageName="Normal Resource Access" 
+      pageName="General Documents" 
       fetchFn={resourceService.getNormalResource} 
     />
   );

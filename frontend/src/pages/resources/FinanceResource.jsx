@@ -5,7 +5,7 @@ import resourceService from '../../services/resourceService';
 const FinanceResource = () => {
   return (
     <ResourceView 
-      pageName="Finance Resource Access" 
+      pageName="Finance Reports" 
       fetchFn={resourceService.getFinanceResource} 
     />
   );

@@ -12,8 +12,8 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-brand">
-        <span className="navbar-logo">ZeroTrust</span>
-        <span className="navbar-title">Security Dashboard</span>
+        <span className="navbar-logo">ACME</span>
+        <span className="navbar-title">Corporate Portal</span>
       </div>
       <div className="navbar-user">
         <div className="user-info">

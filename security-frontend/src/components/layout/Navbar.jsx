@@ -13,7 +13,7 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="navbar-brand">
         <span className="navbar-logo">ZeroTrust</span>
-        <span className="navbar-title">Security Dashboard</span>
+        <span className="navbar-title">AI Security Operations Console</span>
       </div>
       <div className="navbar-user">
         <div className="user-info">

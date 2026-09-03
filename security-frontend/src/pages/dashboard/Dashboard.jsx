@@ -10,7 +10,7 @@ import './Dashboard.css';
 const Dashboard = () => {
   return (
     <div className="dashboard-container">
-      <h1 className="page-title">Security Overview</h1>
+      <h1 className="page-title">Security Operations Overview</h1>
       
       <div className="dashboard-grid">
         {/* 1. Session Status */}

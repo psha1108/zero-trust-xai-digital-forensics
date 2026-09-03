@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
@@ -52,8 +52,8 @@ const Login = () => {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-header">
-          <h1 className="auth-title">Zero Trust Auth</h1>
-          <p className="auth-subtitle">Secure Gateway Access</p>
+          <h1 className="auth-title">AI Security Operations Console</h1>
+          <p className="auth-subtitle">Authorized Security Administrator Access</p>
         </div>
         
         {error && <div className="auth-error" role="alert">{error}</div>}
@@ -83,11 +83,6 @@ const Login = () => {
             Authenticate
           </Button>
         </form>
-
-        <div className="auth-footer">
-          Don't have an access clearance? 
-          <Link to="/register" className="auth-link">Register</Link>
-        </div>
       </div>
     </div>
   );

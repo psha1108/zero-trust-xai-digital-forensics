@@ -38,6 +38,7 @@ RESOURCE_SENSITIVITY = {
     "hr_page": "medium",
     "finance_page": "high",
     "admin_page": "high",
+    "management_reports": "high",
     "confidential_page": "high",
 }
 
@@ -67,6 +68,10 @@ RESOURCE_ALLOWED_ROLES = {
     "admin_page": {
         "admin",
     },
+    "management_reports": {
+        "admin",
+        "finance_user",
+    },
 }
 
 
@@ -86,6 +91,10 @@ RESOURCE_MESSAGES = {
     "admin_page": (
         "Admin Page",
         "System administration panel.",
+    ),
+    "management_reports": (
+        "Management Reports",
+        "Internal management reports for authorized finance and administrative personnel.",
     ),
 }
 
@@ -413,6 +422,20 @@ def hr_page():
 def finance_page():
     return _resource_response(
         "finance_page"
+    )
+
+
+
+
+@resources_bp.route(
+    "/management-reports",
+    methods=["GET"],
+)
+@login_required
+def management_reports():
+    """Protected management reporting resource."""
+    return _resource_response(
+        "management_reports"
     )
 
 

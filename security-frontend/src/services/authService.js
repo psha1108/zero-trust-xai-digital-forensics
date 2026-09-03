@@ -9,17 +9,7 @@ const authService = {
 
     return response.data;
   },
-
-  register: async (userData) => {
-    const response = await axiosInstance.post(
-      '/auth/register',
-      userData
-    );
-
-    return response.data;
-  },
-
-  logout: async () => {
+logout: async () => {
     const response = await axiosInstance.post('/auth/logout');
     return response.data;
   },

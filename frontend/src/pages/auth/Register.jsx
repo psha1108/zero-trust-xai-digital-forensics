@@ -100,7 +100,7 @@ const Register = () => {
       } else if (err.response && err.response.status === 409) {
         setServerError('Username or email already exists.');
       } else {
-        setServerError('Registration failed securely. Please verify your details and try again.');
+        setServerError('Registration could not be completed. Please verify your details and try again.');
       }
     } finally {
       setIsLoading(false);
@@ -111,8 +111,8 @@ const Register = () => {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-header">
-          <h1 className="auth-title">System Enrollment</h1>
-          <p className="auth-subtitle">Register for Secure Access</p>
+          <h1 className="auth-title">Create Portal Account</h1>
+          <p className="auth-subtitle">Register for ACME Technologies portal access</p>
         </div>
         
         {serverError && <div className="auth-error" role="alert">{serverError}</div>}
@@ -163,12 +163,12 @@ const Register = () => {
           />
           
           <Button type="submit" isLoading={isLoading} aria-live="polite">
-            Enroll Device
+            Create Account
           </Button>
         </form>
 
         <div className="auth-footer">
-          Already have clearance? 
+          Already have an account? 
           <Link to="/login" className="auth-link">Login</Link>
         </div>
       </div>

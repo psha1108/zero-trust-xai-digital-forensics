@@ -1,0 +1,47 @@
+{
+  "artifact_sha256": "39c8647ea8b317c765ec3e8decac9794ea4b71c3377452d33091ce4b237a7f7d",
+  "canonical_archetype_names": {
+    "0": "Elevated Behavioral Activity",
+    "1": "Routine Behavioral Activity"
+  },
+  "evaluation_partition": "test",
+  "final_test_rows": 153,
+  "final_test_users": 10,
+  "metrics": {
+    "calinski_harabasz_score": 40.0274059721322,
+    "cluster_sizes": {
+      "0": 20,
+      "1": 133
+    },
+    "davies_bouldin_index": 1.5847812547603515,
+    "eligible": true,
+    "minimum_cluster_size": 20,
+    "observed_cluster_count": 2,
+    "silhouette_score": 0.44162873591577106
+  },
+  "model_fingerprint_sha256": "9059ca795d0317fafd420761d7a226fede6d9bdaf7b600d92df626dd09b34392",
+  "policy_decision_produced": false,
+  "risk_label_used_for_evaluation": false,
+  "scenario_type_used_for_evaluation": false,
+  "selected_k": 2,
+  "semantics": "held-out unsupervised behavioral clustering evaluation; cluster IDs are not risk classes or access-control decisions",
+  "source_features": [
+    "role",
+    "login_hour",
+    "is_working_hour",
+    "failed_attempt_count",
+    "is_new_ip",
+    "is_new_device",
+    "is_unusual_time",
+    "session_duration_minutes",
+    "resource_sensitivity_score",
+    "access_count_5min",
+    "unauthorized_access_attempt",
+    "ip_changed_during_session",
+    "device_changed_during_session",
+    "sensitive_resource_access_count"
+  ],
+  "supervised_metrics_computed": false,
+  "task": "final_held_out_behavioral_clustering_evaluation",
+  "transformed_feature_count": 18
+}

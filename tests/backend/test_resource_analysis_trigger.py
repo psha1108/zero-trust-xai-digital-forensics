@@ -87,7 +87,9 @@ def test_log_and_analyze_uses_exact_committed_access_event(
 def test_resource_response_uses_combined_log_and_analysis_helper(
     monkeypatch,
 ) -> None:
-    app = Flask("resource-analysis-trigger-test")
+    app = Flask(
+        "resource-analysis-trigger-test"
+    )
 
     observed = []
 
@@ -99,28 +101,51 @@ def test_resource_response_uses_combined_log_and_analysis_helper(
     analysis = {
         "prediction": {
             "predicted_risk": "low",
+            "probability_low": 0.95,
+            "probability_medium": 0.03,
+            "probability_high": 0.02,
+        },
+        "anomaly_detection": {
+            "is_anomaly": False,
+        },
+        "behavioral_cluster": {
+            "cluster_id": 1,
         },
     }
 
-    def fake_combined(resource):
+    policy_result = {
+        "action": "Allow",
+        "terminate_session": False,
+        "reason_codes": [
+            "low_risk_routine_authorized",
+        ],
+        "risk_score": 0.02,
+    }
+
+    def fake_enforced(resource):
         observed.append(resource)
-        return event, analysis
 
-    monkeypatch.setattr(
-        resources,
-        "_log_and_analyze_access",
-        fake_combined,
-        raising=False,
-    )
-
-    def forbidden_old_path(resource):
-        pytest.fail(
-            "_resource_response must not call _log_access directly."
+        return (
+            event,
+            analysis,
+            policy_result,
         )
 
     monkeypatch.setattr(
         resources,
-        "_log_access",
+        "_log_analyze_and_enforce_access",
+        fake_enforced,
+    )
+
+    def forbidden_old_path(resource):
+        pytest.fail(
+            "_resource_response must use the unified "
+            "ML + policy enforcement helper."
+        )
+
+    monkeypatch.setattr(
+        resources,
+        "_log_and_analyze_access",
         forbidden_old_path,
     )
 
@@ -129,32 +154,31 @@ def test_resource_response_uses_combined_log_and_analysis_helper(
             "normal_page"
         )
 
-        assert status == 200
-        assert observed == ["normal_page"]
+    assert observed == [
+        "normal_page"
+    ]
 
-        assert response.get_json() == {
-            "title": "Normal Employee Page",
-            "sensitivity": "low",
-            "message": (
-                "General company info, visible to all employees."
-            ),
-        }
+    assert status == 200
+
+    assert response.get_json() == {
+        "title": "Normal Employee Page",
+        "sensitivity": "low",
+        "message": (
+            "General company info, "
+            "visible to all employees."
+        ),
+    }
+
 
 
 def test_denied_admin_access_is_logged_and_analyzed(
     monkeypatch,
 ) -> None:
-    app = Flask("admin-analysis-trigger-test")
+    app = Flask(
+        "admin-analysis-trigger-test"
+    )
 
     observed = []
-
-    monkeypatch.setattr(
-        resources,
-        "current_user",
-        SimpleNamespace(
-            role="employee",
-        ),
-    )
 
     event = SimpleNamespace(
         id=99,
@@ -163,40 +187,71 @@ def test_denied_admin_access_is_logged_and_analyzed(
 
     analysis = {
         "prediction": {
-            "predicted_risk": "high",
+            "predicted_risk": "low",
+            "probability_low": 0.95,
+            "probability_medium": 0.03,
+            "probability_high": 0.02,
+        },
+        "anomaly_detection": {
+            "is_anomaly": False,
+        },
+        "behavioral_cluster": {
+            "cluster_id": 1,
         },
     }
 
-    def fake_combined(resource):
+    policy_result = {
+        "action": "Restrict",
+        "terminate_session": False,
+        "reason_codes": [
+            "privilege_mismatch",
+        ],
+        "risk_score": 0.02,
+    }
+
+    def fake_enforced(resource):
         observed.append(resource)
-        return event, analysis
 
-    monkeypatch.setattr(
-        resources,
-        "_log_and_analyze_access",
-        fake_combined,
-        raising=False,
-    )
-
-    def forbidden_old_path(resource):
-        pytest.fail(
-            "Denied admin access must not call _log_access directly."
+        return (
+            event,
+            analysis,
+            policy_result,
         )
 
     monkeypatch.setattr(
         resources,
-        "_log_access",
+        "_log_analyze_and_enforce_access",
+        fake_enforced,
+    )
+
+    def forbidden_old_path(resource):
+        pytest.fail(
+            "Admin access must use the unified "
+            "ML + policy enforcement helper."
+        )
+
+    monkeypatch.setattr(
+        resources,
+        "_log_and_analyze_access",
         forbidden_old_path,
     )
 
     with app.test_request_context(
         "/api/resources/admin"
     ):
-        response, status = resources.admin_page.__wrapped__()
+        response, status = (
+            resources.admin_page.__wrapped__()
+        )
 
-        assert status == 403
-        assert observed == ["admin_page"]
+    assert observed == [
+        "admin_page"
+    ]
 
-        assert response.get_json() == {
-            "error": "Forbidden — admin role required."
-        }
+    assert status == 403
+
+    assert response.get_json() == {
+        "error": (
+            "Access restricted by Zero Trust policy."
+        ),
+        "policy_action": "Restrict",
+    }

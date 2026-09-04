@@ -1,5 +1,7 @@
 import React from 'react';
+
 import { useAuth } from '../../hooks/useAuth';
+
 import './Layout.css';
 
 const Navbar = () => {
@@ -9,18 +11,44 @@ const Navbar = () => {
     await logout();
   };
 
+  const displayRole = user?.role
+    ? user.role
+        .replaceAll('_', ' ')
+        .replace(/\b\w/g, (letter) => letter.toUpperCase())
+    : 'Employee';
+
   return (
     <nav className="navbar">
       <div className="navbar-brand">
-        <span className="navbar-logo">ZeroTrust</span>
-        <span className="navbar-title">Security Dashboard</span>
+        <span className="navbar-logo">
+          ACME
+        </span>
+
+        <span className="navbar-title">
+          Technologies
+        </span>
+
+        <span className="navbar-portal-label">
+          Internal Corporate Portal
+        </span>
       </div>
+
       <div className="navbar-user">
         <div className="user-info">
-          <span className="user-name">{user?.username || 'Guest'}</span>
-          <span className="user-role">{user?.role || 'No Role'}</span>
+          <span className="user-name">
+            {user?.username || 'Employee'}
+          </span>
+
+          <span className="user-role">
+            {displayRole}
+          </span>
         </div>
-        <button className="btn-logout" onClick={handleLogout}>
+
+        <button
+          className="btn-logout"
+          onClick={handleLogout}
+          type="button"
+        >
           Logout
         </button>
       </div>

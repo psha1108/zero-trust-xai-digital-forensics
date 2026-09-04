@@ -17,6 +17,7 @@ def create_app(test_config=None):
     CORS(app, supports_credentials=True, origins=[
         "http://localhost:3000",
         "http://localhost:5173",
+        "http://localhost:5174",
     ])
 
     # Cross-port localhost requests are still "same-site" to browsers, so
@@ -50,6 +51,9 @@ def create_app(test_config=None):
 
         if not current_user.is_authenticated:
             return  # let login/register/unauthenticated requests through normally
+
+        if request.path in ["/api/auth/login", "/api/auth/register", "/api/auth/logout"]:
+            return
 
         session_id = flask_session.get("app_session_id")
         if not session_id:

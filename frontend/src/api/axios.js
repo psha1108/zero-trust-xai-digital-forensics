@@ -19,6 +19,7 @@ axiosInstance.interceptors.response.use(
       // We will handle redirecting to login at the app level or context level,
       // but logging it here is helpful.
       console.warn('Session expired or unauthorized. Please log in again.');
+      window.dispatchEvent(new CustomEvent('session_expired'));
     }
     return Promise.reject(error);
   }

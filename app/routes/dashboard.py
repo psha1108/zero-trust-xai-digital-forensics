@@ -645,3 +645,51 @@ def soc_security_alerts():
 
     return jsonify(result), 200
 
+@dashboard_bp.route(
+    "/soc/sessions-history",
+    methods=["GET"],
+)
+@login_required
+def soc_sessions_history():
+    """Return recent historical sessions across all application users."""
+    auth_err = _soc_require_admin()
+
+    if auth_err:
+        return auth_err
+
+    sessions = (
+        Session.query
+        .order_by(
+            Session.started_at.desc(),
+            Session.id.desc(),
+        )
+        .limit(50)
+        .all()
+    )
+
+    result = []
+
+    for row in sessions:
+        result.append({
+            "session_id": row.session_id,
+            "user_id": row.user_id,
+            "username": _soc_username(row.user_id),
+            "started_at": (
+                row.started_at.isoformat()
+                if row.started_at
+                else None
+            ),
+            "ended_at": (
+                row.ended_at.isoformat()
+                if row.ended_at
+                else None
+            ),
+            "current_ip": row.current_ip,
+            "current_device_fingerprint": row.current_device_fingerprint,
+            "risk_label": row.current_risk_label,
+            "risk_score": row.current_risk_score,
+            "is_active": bool(row.is_active),
+            "end_reason": getattr(row, "end_reason", None)
+        })
+
+    return jsonify(result), 200

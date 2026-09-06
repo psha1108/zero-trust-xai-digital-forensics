@@ -16,6 +16,11 @@ const resourceService = {
     return response.data;
   },
   
+  getManagementReportsResource: async () => {
+    const response = await axiosInstance.get('/resources/management-reports');
+    return response.data;
+  },
+  
   getAdminResource: async () => {
     const response = await axiosInstance.get('/resources/admin');
     return response.data;

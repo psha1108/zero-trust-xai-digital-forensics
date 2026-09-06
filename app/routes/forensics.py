@@ -24,12 +24,72 @@ def get_evidence():
         try:
             details_json = json.loads(r.details)
         except:
-            details_json = r.details
+            details_json = {"raw": r.details}
+            
+        event_id = None
+        event_type = "Unknown"
+        session_id = None
+        timestamp = None
+        user = "unknown"
+        resource = None
+        risk = None
+        policy_decision = None
+        
+        # New structure
+        if "event" in details_json:
+            event_info = details_json.get("event", {})
+            event_id = event_info.get("event_id")
+            event_type = event_info.get("event_type", "Unknown")
+            session_id = details_json.get("session_id")
+            timestamp = details_json.get("timestamp")
+            
+            user_info = details_json.get("user", {})
+            user = user_info.get("username", "unknown")
+            
+            resource_info = details_json.get("resource", {})
+            resource = resource_info.get("name")
+            
+            ml_info = details_json.get("ml", {}).get("random_forest", {})
+            risk = ml_info.get("risk_label")
+            
+            zt_info = details_json.get("zero_trust", {})
+            policy_decision = zt_info.get("policy_decision")
+        else:
+            # Old structure backward compatibility
+            event_type = details_json.get("event_type", "Unknown")
+            if event_type == "LoginEvent":
+                event_id = details_json.get("login_event_id", r.login_event_id)
+            elif event_type == "AccessEvent":
+                event_id = details_json.get("access_event_id")
+            
+            session_id = details_json.get("session_id")
+            timestamp = details_json.get("timestamp")
+            user = details_json.get("username_attempted") or "unknown"
+            resource = details_json.get("resource")
+            
+        if user == "unknown" and session_id:
+            # Try to resolve user from Session
+            s = Session.query.filter_by(session_id=session_id).first()
+            if s:
+                from app.models import User
+                u = User.query.get(s.user_id)
+                if u:
+                    user = u.username
+                    
+        if user == "unknown":
+            user = "Not available"
             
         results.append({
-            "id": r.id,
+            "evidence_id": r.id,
+            "event_id": event_id,
+            "event_type": event_type,
             "login_event_id": r.login_event_id,
-            "created_at": r.created_at.isoformat() if r.created_at else None,
+            "session_id": session_id,
+            "timestamp": timestamp or (r.created_at.isoformat() if r.created_at else None),
+            "user": user,
+            "resource": resource,
+            "risk": risk,
+            "policy_decision": policy_decision,
             "record_hash": r.record_hash,
             "previous_hash": r.previous_hash,
             "details": details_json
@@ -56,6 +116,7 @@ def _get_timeline_events(session_id):
     login = LoginEvent.query.get(session_row.login_event_id)
     if login:
         events.append({
+            "event_id": login.id,
             "timestamp": login.timestamp.isoformat() if login.timestamp else None,
             "event_type": "LoginEvent",
             "user_id": login.user_id,
@@ -72,17 +133,60 @@ def _get_timeline_events(session_id):
     # 2. Access Events
     accesses = AccessEvent.query.filter_by(session_id=session_id).all()
     for acc in accesses:
+        # Fetch the corresponding evidence log to extract ML fields that aren't natively in the AccessEvent table
+        risk_label = None
+        anomaly_score = None
+        cluster_id = None
+        policy_reason = None
+        policy_decision = None
+        
+        # We need to find the EvidenceLog where details->event->event_id == acc.id and event_type == AccessEvent
+        log = EvidenceLog.query.filter_by(login_event_id=session_row.login_event_id).all()
+        for l in log:
+            try:
+                details = json.loads(l.details)
+                if details.get("event", {}).get("event_type") == "AccessEvent" and details.get("event", {}).get("event_id") == acc.id:
+                    ml = details.get("ml", {})
+                    risk_label = ml.get("random_forest", {}).get("risk_label")
+                    risk_score = ml.get("random_forest", {}).get("risk_score")
+                    anomaly_score = ml.get("isolation_forest", {}).get("anomaly_score")
+                    cluster_id = ml.get("kmeans", {}).get("cluster_id")
+                    zt = details.get("zero_trust", {})
+                    policy_reason = zt.get("reason")
+                    policy_decision = zt.get("policy_decision")
+                    break
+                elif details.get("event_type") == "AccessEvent" and details.get("access_event_id") == acc.id:
+                    ml = details.get("ml", {})
+                    risk_label = ml.get("random_forest", {}).get("risk_label")
+                    risk_score = ml.get("random_forest", {}).get("risk_score")
+                    anomaly_score = ml.get("isolation_forest", {}).get("anomaly_score")
+                    cluster_id = ml.get("kmeans", {}).get("cluster_id")
+                    zt = details.get("zero_trust", {})
+                    policy_reason = zt.get("reason")
+                    policy_decision = zt.get("policy_decision")
+                    break
+            except:
+                pass
+
         events.append({
+            "event_id": acc.id,
             "timestamp": acc.timestamp.isoformat() if acc.timestamp else None,
             "event_type": "AccessEvent",
             "user_id": acc.user_id,
             "session_id": acc.session_id,
+            "resource": acc.resource,
             "ip_address": acc.ip_address,
             "device_info": acc.device_id,
             "action": f"access {acc.resource}",
             "result": acc.decision if acc.decision else "unknown",
-            "risk_score": getattr(acc, "risk_score", None),
-            "privilege_mismatch": acc.privilege_mismatch
+            "decision": acc.decision if acc.decision else "unknown",
+            "risk_score": getattr(acc, "risk_score", risk_score if 'risk_score' in locals() else None),
+            "risk_label": risk_label,
+            "anomaly_score": anomaly_score,
+            "cluster_id": cluster_id,
+            "privilege_mismatch": acc.privilege_mismatch,
+            "policy_reason": policy_reason,
+            "policy_decision": policy_decision
         })
         
     # Sort chronologically
@@ -118,11 +222,17 @@ def get_report(session_id):
     evidence_logs = EvidenceLog.query.filter_by(login_event_id=session_row.login_event_id).order_by(EvidenceLog.id.asc()).all()
     inventory = []
     for log in evidence_logs:
+        try:
+            details_json = json.loads(log.details)
+        except:
+            details_json = {"raw": log.details}
+            
         inventory.append({
             "evidence_id": log.id,
             "timestamp": log.created_at.isoformat() if log.created_at else None,
             "record_hash": log.record_hash,
-            "previous_hash": log.previous_hash
+            "previous_hash": log.previous_hash,
+            "details": details_json
         })
         
     # Findings

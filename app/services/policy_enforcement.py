@@ -187,9 +187,7 @@ def apply_zero_trust_policy(
     )
 
     action = policy_result["action"]
-    terminate_session = policy_result[
-        "terminate_session"
-    ]
+    terminate_session = policy_result["terminate_session"]
 
     login_event.action_taken = action
 
@@ -199,15 +197,9 @@ def apply_zero_trust_policy(
     session_row.current_risk_score = risk_score
     session_row.current_risk_label = predicted_risk
 
-    if terminate_session:
-        session_row.is_active = False
-
-        if session_row.ended_at is None:
-            session_row.ended_at = datetime.utcnow()
-
-        session_row.end_reason = "blocked"
-
-    db.session.commit()
+    # Session termination logic has been moved to the caller to ensure
+    # the EvidenceLog is created BEFORE the session is terminated.
+    db.session.flush()
 
     return {
         **policy_result,

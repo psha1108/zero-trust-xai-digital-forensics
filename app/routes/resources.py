@@ -70,7 +70,6 @@ RESOURCE_ALLOWED_ROLES = {
     },
     "management_reports": {
         "admin",
-        "finance_user",
     },
 }
 
@@ -218,46 +217,6 @@ def _log_access(
     db.session.add(event)
     db.session.flush()
 
-    session_row = (
-        Session.query
-        .filter_by(
-            session_id=session_id,
-        )
-        .first()
-    )
-
-    anchor_login_id = (
-        session_row.login_event_id
-        if session_row
-        else None
-    )
-
-    if anchor_login_id:
-        details = {
-            "event_type": "AccessEvent",
-            "access_event_id": event.id,
-            "session_id": event.session_id,
-            "user_id": event.user_id,
-            "resource": event.resource,
-            "timestamp": event.timestamp.isoformat(),
-            "ip_address": event.ip_address,
-            "device_fingerprint": (
-                event.device_fingerprint
-            ),
-            "privilege_mismatch": (
-                event.privilege_mismatch
-            ),
-            "ip_changed": event.ip_changed,
-            "device_changed": (
-                event.device_changed
-            ),
-        }
-
-        preserve_evidence(
-            anchor_login_id,
-            details,
-        )
-
     db.session.commit()
 
     return event
@@ -301,6 +260,81 @@ def _log_analyze_and_enforce_access(
         analysis=analysis,
     )
 
+    # 8. Create final Evidence Snapshot for AccessEvent
+    session_row = Session.query.filter_by(session_id=event.session_id).first()
+    anchor_login_id = session_row.login_event_id if session_row else None
+
+    if anchor_login_id:
+        details = {
+            "event": {
+                "event_id": event.id,
+                "event_type": "AccessEvent",
+            },
+            "access_event_id": event.id,
+            "session_id": event.session_id,
+            "user_id": event.user_id,
+            "user": {
+                "user_id": event.user_id,
+                "username": current_user.username,
+                "role": current_user.role
+            },
+            "timestamp": event.timestamp.isoformat(),
+            "resource": {
+                "name": event.resource,
+                "sensitivity": event.resource_sensitivity
+            },
+            "network": {
+                "ip_address": event.ip_address,
+                "ip_changed_during_session": event.ip_changed
+            },
+            "device": {
+                "device_id": event.device_id,
+                "device_fingerprint": event.device_fingerprint,
+                "device_changed_during_session": event.device_changed
+            },
+            "security": {
+                "privilege_mismatch": event.privilege_mismatch,
+                "unauthorized_access_attempt": False
+            },
+            "access": {
+                "request_count": analysis.get("features", {}).get("access_count_5min", 0)
+            },
+            "ml": {
+                "isolation_forest": {
+                    "anomaly_score": analysis.get("anomaly_detection", {}).get("anomaly_score"),
+                    "is_anomaly": analysis.get("anomaly_detection", {}).get("is_anomaly")
+                },
+                "random_forest": {
+                    "risk_label": analysis.get("prediction", {}).get("predicted_risk"),
+                    "risk_score": analysis.get("prediction", {}).get("probability_high")
+                },
+                "kmeans": {
+                    "cluster_id": analysis.get("behavioral_cluster", {}).get("cluster_id"),
+                    "behavior_label": analysis.get("behavioral_cluster", {}).get("archetype_name")
+                }
+            },
+            "shap": analysis.get("explanation", {}),
+            "zero_trust": {
+                "policy_decision": policy_result.get("action"),
+                "reason": ", ".join(policy_result.get("reason_codes", [])) if policy_result.get("reason_codes") else "No reason provided",
+                "http_status": 200 if policy_result.get("action") == "Allow" else (
+                    403 if policy_result.get("action") == "Restrict" else (
+                        200 if policy_result.get("action") == "OTP" and has_valid_otp_grant(session_id=event.session_id, user_id=current_user.id, resource=event.resource) else 401
+                    )
+                )
+            }
+        }
+        preserve_evidence(anchor_login_id, details)
+        
+    # 9. Handle session termination AFTER evidence preservation
+    if policy_result.get("terminate_session") and session_row:
+        session_row.is_active = False
+        if session_row.ended_at is None:
+            session_row.ended_at = datetime.utcnow()
+        session_row.end_reason = "blocked"
+
+    db.session.commit()
+
     return (
         event,
         analysis,
@@ -317,13 +351,22 @@ def _successful_resource_response(
         resource_key
     ]
 
-    return jsonify({
+    response_data = {
         "title": title,
-        "sensitivity": RESOURCE_SENSITIVITY[
-            resource_key
-        ],
+        "sensitivity": RESOURCE_SENSITIVITY[resource_key],
         "message": message,
-    }), 200
+    }
+
+    if resource_key == "management_reports":
+        response_data["dummy_data"] = {
+            "monthly_active_users": 1542,
+            "system_uptime": "99.99%",
+            "incidents_blocked": 42,
+            "revenue_impact": "$1.2M",
+            "report_date": datetime.utcnow().isoformat()
+        }
+
+    return jsonify(response_data), 200
 
 
 def _resource_response(

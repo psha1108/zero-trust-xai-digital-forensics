@@ -60,7 +60,7 @@ const TimelineView = () => {
               <div key={idx} className={`timeline-item ${isSuspicious ? 'suspicious' : ''}`}>
                 <div className="timeline-content">
                   <div className="timeline-meta">
-                    {formatDateIST(event.timestamp)} • {event.event_type}
+                    {formatDateIST(event.timestamp)} • {event.event_type} • Event ID: {event.event_id || 'Unknown'}
                   </div>
                   <h3 style={{ margin: '0 0 10px 0', color: isSuspicious ? '#dc3545' : 'inherit' }}>
                     {event.action}

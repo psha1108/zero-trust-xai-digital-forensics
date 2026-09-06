@@ -11,6 +11,19 @@ const TimelineView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const getTriggers = (reason) => {
+    if (!reason) return ["None — normal authorized access"];
+    const triggers = [];
+    if (reason.includes('privilege_mismatch')) triggers.push('Privilege Mismatch');
+    if (reason.includes('rf_high_risk')) triggers.push('High Random Forest Risk');
+    if (reason.includes('rf_medium_risk')) triggers.push('Medium Random Forest Risk');
+    if (reason.includes('isolation_forest_anomaly')) triggers.push('Isolation Forest Anomaly');
+    if (reason.includes('elevated_behavior')) triggers.push('Elevated K-Means Behaviour');
+    
+    if (triggers.length === 0) return ["None — normal authorized access"];
+    return triggers;
+  };
+
   useEffect(() => {
     const fetchTimeline = async () => {
       try {
@@ -70,13 +83,24 @@ const TimelineView = () => {
                       <strong>User ID:</strong> {event.user_id}<br />
                       <strong>IP Address:</strong> {event.ip_address}<br />
                       <strong>Result:</strong> {event.result}
+                      <br /><br />
+                      {event.event_type === 'AccessEvent' && (
+                        <div>
+                          <strong>Policy Decision:</strong> {event.policy_decision || 'N/A'}<br />
+                          <strong>Trigger/Reason:</strong> {getTriggers(event.policy_reason).join(', ')}
+                        </div>
+                      )}
                     </div>
                     <div>
-                      {event.privilege_mismatch && <div style={{color: '#dc3545'}}>Privilege Mismatch!</div>}
-                      {event.risk_label ? (
-                        <div><strong>Risk:</strong> {event.risk_label} (Score: {event.risk_score || event.anomaly_score})</div>
+                      {event.event_type === 'AccessEvent' ? (
+                        <div>
+                          <strong>ML Risk Assessment:</strong><br />
+                          <span style={{display: 'inline-block', width: '60px'}}>RF Risk:</span> {event.risk_label === 'low' ? 'Low' : event.risk_label === 'medium' ? 'Medium' : event.risk_label === 'high' ? 'High' : (event.risk_label || 'N/A')}<br />
+                          <span style={{display: 'inline-block', width: '60px'}}>IF:</span> {event.anomaly_score !== null ? (event.policy_reason && event.policy_reason.includes('isolation_forest_anomaly') ? 'Anomaly Detected' : 'Normal') : 'N/A'}<br />
+                          <span style={{display: 'inline-block', width: '60px'}}>K-Means:</span> {event.cluster_id !== null ? `Cluster ${event.cluster_id}` : 'N/A'}
+                        </div>
                       ) : (
-                        <div style={{color: '#888'}}>Risk Assessment: Not available</div>
+                        <div style={{color: '#888'}}>Risk Assessment: Not applicable</div>
                       )}
                     </div>
                   </div>

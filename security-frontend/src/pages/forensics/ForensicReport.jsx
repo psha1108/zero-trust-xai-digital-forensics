@@ -89,20 +89,28 @@ const ForensicReport = () => {
             <thead>
               <tr>
                 <th>Evidence ID</th>
+                <th>Event ID</th>
+                <th>Event Type</th>
                 <th>Timestamp</th>
                 <th>Record Hash</th>
                 <th>Previous Hash</th>
               </tr>
             </thead>
             <tbody>
-              {report.evidence_inventory.map(ev => (
-                <tr key={ev.evidence_id}>
-                  <td>{ev.evidence_id}</td>
-                  <td>{formatDateIST(ev.timestamp)}</td>
-                  <td className="hash-text">{ev.record_hash || 'Not available'}</td>
-                  <td className="hash-text">{ev.previous_hash || 'Not available'}</td>
-                </tr>
-              ))}
+              {report.evidence_inventory.map(ev => {
+                const eId = ev.details?.event?.event_id || (ev.details?.event_type === 'LoginEvent' ? ev.details?.login_event_id : (ev.details?.event_type === 'AccessEvent' ? ev.details?.access_event_id : null)) || 'Unknown';
+                const eType = ev.details?.event?.event_type || ev.details?.event_type || 'Unknown';
+                return (
+                  <tr key={ev.evidence_id}>
+                    <td>{ev.evidence_id}</td>
+                    <td>{eId}</td>
+                    <td>{eType}</td>
+                    <td>{formatDateIST(ev.timestamp)}</td>
+                    <td className="hash-text">{ev.record_hash || 'Not available'}</td>
+                    <td className="hash-text">{ev.previous_hash || 'Not available'}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         ) : (
@@ -134,20 +142,59 @@ const ForensicReport = () => {
         </table>
 
         <h2>8. ML / RISK ANALYSIS</h2>
-        {report.incident_timeline.some(e => e.risk_label || e.anomaly_score || e.risk_score) ? (
+        {report.evidence_inventory.some(ev => ev.details?.ml) ? (
           <ul>
-            {report.incident_timeline.filter(e => e.risk_label || e.anomaly_score || e.risk_score).map((e, i) => (
-              <li key={i}>
-                [{formatDateIST(e.timestamp)}] {e.action} - Risk Label: {e.risk_label || 'Not available'}, Score: {e.risk_score || e.anomaly_score || 'Not available'}, Cluster: {e.cluster_id || 'Not available'}
-              </li>
-            ))}
+            {report.evidence_inventory.filter(ev => ev.details?.ml).map((ev, i) => {
+              const ml = ev.details.ml;
+              const iforest = ml.isolation_forest || {};
+              const rforest = ml.random_forest || {};
+              const kmeans = ml.kmeans || {};
+              return (
+                <li key={i}>
+                  [{formatDateIST(ev.timestamp)}] Event ID {ev.details?.event?.event_id || 'Unknown'} - 
+                  IF Anomaly: {iforest.anomaly_score ?? 'N/A'}, 
+                  RF Risk: {rforest.risk_label || 'N/A'} (Score: {rforest.risk_score ?? 'N/A'}), 
+                  Cluster: {kmeans.cluster_id ?? 'N/A'}
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <p>Risk Assessment: Not available</p>
         )}
 
         <h2>9. SHAP EXPLANATION</h2>
-        <p>SHAP Explanation: Not available</p>
+        {report.evidence_inventory.some(ev => (ev.details?.shap && Object.keys(ev.details.shap).length > 0) || (ev.details?.xai?.shap && Object.keys(ev.details.xai.shap).length > 0)) ? (
+          <div>
+            {report.evidence_inventory.filter(ev => (ev.details?.shap && Object.keys(ev.details.shap).length > 0) || (ev.details?.xai?.shap && Object.keys(ev.details.xai.shap).length > 0)).map((ev, i) => {
+              const shapData = ev.details.shap || ev.details.xai.shap;
+              return (
+              <div key={i} style={{ marginBottom: '15px' }}>
+                <p><strong>Event ID {ev.details?.event?.event_id || 'Unknown'}</strong> ({formatDateIST(ev.timestamp)}):</p>
+                <table className="shap-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ border: '1px solid #ccc', padding: '5px' }}>Feature</th>
+                      <th style={{ border: '1px solid #ccc', padding: '5px' }}>Value</th>
+                      <th style={{ border: '1px solid #ccc', padding: '5px' }}>Contribution</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(shapData).map(([feature, data]) => (
+                      <tr key={feature}>
+                        <td style={{ border: '1px solid #ccc', padding: '5px' }}>{feature}</td>
+                        <td style={{ border: '1px solid #ccc', padding: '5px' }}>{data.value !== undefined ? data.value : 'N/A'}</td>
+                        <td style={{ border: '1px solid #ccc', padding: '5px' }}>{data.contribution !== undefined ? data.contribution.toFixed(4) : 'N/A'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )})}
+          </div>
+        ) : (
+          <p>SHAP Explanation: Not available</p>
+        )}
 
         <h2>10. ZERO TRUST / ACCESS CONTROL ANALYSIS</h2>
         <ul>

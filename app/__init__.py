@@ -18,6 +18,7 @@ def create_app(test_config=None):
         "http://localhost:3000",
         "http://localhost:5173",
         "http://localhost:5174",
+        "http://localhost:5175",
     ])
 
     # Cross-port localhost requests are still "same-site" to browsers, so

@@ -11,7 +11,7 @@ from app.utils.forensics_utils import preserve_evidence
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
 
-def _log_login_event(username_attempted: str, success: bool, user_id: int | None) -> LoginEvent:
+def _log_login_event(username_attempted: str, success: bool, user_id: int | None, role: str | None = None, client_id: str | None = None) -> LoginEvent:
     event = LoginEvent(
         user_id=user_id,
         username_attempted=username_attempted,
@@ -24,16 +24,42 @@ def _log_login_event(username_attempted: str, success: bool, user_id: int | None
     db.session.flush()
     
     details = {
-        "event_type": "LoginEvent",
-        "login_event_id": event.id,
-        "user_id": event.user_id,
-        "username_attempted": event.username_attempted,
-        "timestamp": event.timestamp.isoformat(),
-        "ip_address": event.ip_address,
-        "device_info": event.device_info,
-        "success": event.success
+        "event": {
+            "event_id": event.id,
+            "event_type": "LoginEvent",
+            "timestamp": event.timestamp.isoformat(),
+            "session_id": None
+        },
+        "user": {
+            "user_id": event.user_id,
+            "username": event.username_attempted,
+            "role": role
+        },
+        "network": {
+            "ip_address": event.ip_address,
+            "ip_changed_during_session": False
+        },
+        "device": {
+            "device_info": event.device_info,
+            "device_changed_during_session": False
+        },
+        "security": {
+            "success": event.success
+        }
     }
-    preserve_evidence(event.id, details)
+    if client_id == 'soc':
+        import json
+        from app.models import SocAuditLog
+        audit_event = SocAuditLog(
+            user_id=user_id,
+            action="SOC Login",
+            timestamp=datetime.utcnow(),
+            details=json.dumps(details)
+        )
+        db.session.add(audit_event)
+    else:
+        preserve_evidence(event.id, details)
+        
     db.session.commit()
     return event
 
@@ -76,8 +102,12 @@ def register():
 @auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json(silent=True) or {}
+
+
+
     username = (data.get("username") or "").strip()
     password = data.get("password") or ""
+    client_id = (data.get("client_id") or "").strip()
 
     user = User.query.filter_by(username=username).first()
     success = user is not None and user.check_password(password)
@@ -86,6 +116,8 @@ def login():
         username_attempted=username,
         success=success,
         user_id=user.id if user else None,
+        role=user.role if user else None,
+        client_id=client_id,
     )
 
     if success:

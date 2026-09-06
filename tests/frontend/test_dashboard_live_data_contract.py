@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 SERVICE_PATH = (
     ROOT
-    / "frontend"
+    / "security-frontend"
     / "src"
     / "services"
     / "dashboardService.js"
@@ -13,7 +13,7 @@ SERVICE_PATH = (
 
 SESSION_CARD_PATH = (
     ROOT
-    / "frontend"
+    / "security-frontend"
     / "src"
     / "components"
     / "dashboard"

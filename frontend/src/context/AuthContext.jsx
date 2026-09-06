@@ -8,9 +8,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const handleSessionExpired = () => setUser(null);
-    window.addEventListener('session_expired', handleSessionExpired);
-
     const checkAuth = async () => {
       try {
         const data = await authService.checkAuth();
@@ -28,10 +25,6 @@ export const AuthProvider = ({ children }) => {
     };
     
     checkAuth();
-    
-    return () => {
-      window.removeEventListener('session_expired', handleSessionExpired);
-    };
   }, []);
 
   const login = async (username, password) => {

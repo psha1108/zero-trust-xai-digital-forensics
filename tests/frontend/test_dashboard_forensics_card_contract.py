@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 SERVICE = (
     ROOT
-    / "frontend"
+    / "security-frontend"
     / "src"
     / "services"
     / "forensicsService.js"
@@ -22,7 +22,7 @@ SERVICE = (
 
 CARD = (
     ROOT
-    / "frontend"
+    / "security-frontend"
     / "src"
     / "components"
     / "dashboard"
@@ -32,7 +32,7 @@ CARD = (
 
 DASHBOARD = (
     ROOT
-    / "frontend"
+    / "security-frontend"
     / "src"
     / "pages"
     / "dashboard"

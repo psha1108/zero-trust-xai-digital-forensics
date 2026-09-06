@@ -100,7 +100,7 @@ const Register = () => {
       } else if (err.response && err.response.status === 409) {
         setServerError('Username or email already exists.');
       } else {
-        setServerError('Registration could not be completed. Please verify your details and try again.');
+        setServerError('Registration failed securely. Please verify your details and try again.');
       }
     } finally {
       setIsLoading(false);
@@ -112,7 +112,7 @@ const Register = () => {
       <div className="auth-card">
         <div className="auth-header">
           <h1 className="auth-title">Create Portal Account</h1>
-          <p className="auth-subtitle">Register for ACME Technologies portal access</p>
+          <p className="auth-subtitle">Register for Corporate Portal Access</p>
         </div>
         
         {serverError && <div className="auth-error" role="alert">{serverError}</div>}
@@ -163,7 +163,7 @@ const Register = () => {
           />
           
           <Button type="submit" isLoading={isLoading} aria-live="polite">
-            Create Account
+            Enroll Device
           </Button>
         </form>
 

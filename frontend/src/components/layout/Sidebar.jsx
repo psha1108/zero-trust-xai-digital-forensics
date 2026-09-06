@@ -1,146 +1,66 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-
-import { useAuth } from '../../hooks/useAuth';
-
 import './Layout.css';
 
 const Sidebar = () => {
-  const { user, logout } = useAuth();
-
-  const handleLogout = async () => {
-    await logout();
-  };
-
   const linkClass = ({ isActive }) =>
     `nav-link ${isActive ? 'active' : ''}`;
-
-  const isAdmin = user?.role === 'admin';
 
   return (
     <aside className="sidebar">
       <nav className="sidebar-nav">
         <div className="nav-section">
           <h3 className="nav-heading">
-            Main
+            Portal
           </h3>
 
           <NavLink
             to="/dashboard"
             className={linkClass}
           >
-            <span aria-hidden="true">?</span>
-            <span>Dashboard</span>
+            Home
           </NavLink>
 
           <NavLink
             to="/profile"
             className={linkClass}
           >
-            <span aria-hidden="true">?</span>
-            <span>My Profile</span>
+            My Profile
           </NavLink>
         </div>
 
         <div className="nav-section">
           <h3 className="nav-heading">
-            Workspace
+            Resources
           </h3>
 
           <NavLink
-            to="/documents"
+            to="/resources/normal"
             className={linkClass}
           >
-            <span aria-hidden="true">?</span>
-            <span>Documents</span>
+            General Documents
           </NavLink>
 
           <NavLink
-            to="/tasks"
+            to="/resources/hr"
             className={linkClass}
           >
-            <span aria-hidden="true">?</span>
-            <span>My Tasks</span>
+            HR Documents
           </NavLink>
 
           <NavLink
-            to="/announcements"
+            to="/resources/finance"
             className={linkClass}
           >
-            <span aria-hidden="true">?</span>
-            <span>Announcements</span>
+            Finance Reports
           </NavLink>
 
           <NavLink
-            to="/policies"
+            to="/resources/admin"
             className={linkClass}
           >
-            <span aria-hidden="true">?</span>
-            <span>Company Policies</span>
+            Admin Controls
           </NavLink>
-        </div>
-
-        <div className="nav-section">
-          <h3 className="nav-heading">
-            Departments
-          </h3>
-
-          <NavLink
-            to="/hr"
-            className={linkClass}
-          >
-            <span aria-hidden="true">?</span>
-            <span>HR &amp; People</span>
-          </NavLink>
-
-          <NavLink
-            to="/finance"
-            className={linkClass}
-          >
-            <span aria-hidden="true">?</span>
-            <span>Finance</span>
-          </NavLink>
-
-          <NavLink
-            to="/it-support"
-            className={linkClass}
-          >
-            <span aria-hidden="true">?</span>
-            <span>IT Support</span>
-          </NavLink>
-        </div>
-
-        <div className="nav-section">
-          <h3 className="nav-heading">
-            Account
-          </h3>
-
-          <NavLink
-            to="/sessions"
-            className={linkClass}
-          >
-            <span aria-hidden="true">?</span>
-            <span>My Sessions</span>
-          </NavLink>
-
-          <button
-            className="nav-link sidebar-logout"
-            type="button"
-            onClick={handleLogout}
-          >
-            <span aria-hidden="true">?</span>
-            <span>Logout</span>
-          </button>
-
-          {isAdmin && (
-            <NavLink
-              to="/resources/admin"
-              className={linkClass}
-            >
-              <span aria-hidden="true">?</span>
-              <span>Admin Controls</span>
-            </NavLink>
-          )}
         </div>
       </nav>
     </aside>

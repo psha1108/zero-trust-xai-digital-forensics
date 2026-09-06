@@ -3,11 +3,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
-APP = ROOT / "frontend" / "src" / "App.jsx"
+APP = ROOT / "dummy" / "src" / "App.jsx"
 
 PROTECTED_ROUTE = (
     ROOT
-    / "frontend"
+    / "dummy"
     / "src"
     / "components"
     / "ProtectedRoute.jsx"
@@ -15,7 +15,7 @@ PROTECTED_ROUTE = (
 
 ADMIN_ROUTE = (
     ROOT
-    / "frontend"
+    / "dummy"
     / "src"
     / "components"
     / "AdminRoute.jsx"
@@ -23,7 +23,7 @@ ADMIN_ROUTE = (
 
 SIDEBAR = (
     ROOT
-    / "frontend"
+    / "dummy"
     / "src"
     / "components"
     / "layout"

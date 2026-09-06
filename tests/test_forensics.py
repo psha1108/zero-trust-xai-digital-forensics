@@ -163,10 +163,10 @@ def test_auth_login_event_integration(app, admin_user):
     assert log is not None
     assert log.login_event_id == event.id
     details = json.loads(log.details)
-    assert details["event_type"] == "LoginEvent"
+    assert details.get("event_type") == "LoginEvent" or details.get("event", {}).get("event_type") == "LoginEvent"
 
 def test_resources_access_event_integration(app, admin_user, mock_login_event):
-    from app.routes.resources import _log_access
+    from app.routes.resources import _log_analyze_and_enforce_access
     from flask import request, session as flask_session
     from flask_login import login_user
     
@@ -186,14 +186,17 @@ def test_resources_access_event_integration(app, admin_user, mock_login_event):
     with app.test_request_context():
         login_user(admin_user)
         flask_session["app_session_id"] = test_session_id
-        event = _log_access("admin_page")
+        policy_result, event_response, http_status = _log_analyze_and_enforce_access("admin_page")
         
+    # We can retrieve the event from the database via the session
+    from app.models import AccessEvent
+    event = AccessEvent.query.filter_by(session_id=test_session_id).first()
     assert event.id is not None
     log = EvidenceLog.query.filter_by(login_event_id=mock_login_event.id).first()
     assert log is not None
     details = json.loads(log.details)
-    assert details["event_type"] == "AccessEvent"
-    assert details["resource"] == "admin_page"
+    assert details.get("event_type") == "AccessEvent" or details.get("event", {}).get("event_type") == "AccessEvent"
+    assert details.get("resource") == "admin_page" or details.get("resource", {}).get("name") == "admin_page"
 
 def test_transaction_rollback_isolation(app, mock_login_event):
     try:

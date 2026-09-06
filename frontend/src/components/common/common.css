@@ -1,223 +1,141 @@
+/* Input Styles */
 .input-group {
   display: flex;
   flex-direction: column;
-
+  margin-bottom: 1.5rem;
   width: 100%;
-
-  margin-bottom: 1.15rem;
 }
 
 .input-label {
-  margin-bottom: 0.4rem;
-
-  color: var(--primary-strong);
-
-  font-size: 0.78rem;
-  font-weight: 700;
-
-  letter-spacing: 0;
-  text-transform: none;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .input-field {
-  width: 100%;
-
-  padding: 0.75rem 0.85rem;
-
-  border:
-    1px solid var(--border-strong);
-
-  border-radius: 8px;
-
-  background: #ffffff;
-
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.3);
   color: var(--text-primary);
-
-  font-size: 0.92rem;
-
+  font-size: 1rem;
   outline: none;
-
-  transition:
-    border-color 0.18s ease,
-    box-shadow 0.18s ease,
-    background 0.18s ease;
-}
-
-.input-field::placeholder {
-  color: #98a2b3;
-}
-
-.input-field:hover {
-  border-color: #b7c3d2;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .input-field:focus {
-  border-color: var(--accent-color);
-
-  box-shadow:
-    0 0 0 3px
-    rgba(
-      15,
-      143,
-      131,
-      0.11
-    );
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(0, 255, 204, 0.2);
 }
 
 .input-error {
-  border-color: #da817b;
+  border-color: var(--error-color);
 }
 
 .error-message {
-  margin-top: 0.4rem;
-
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
   color: var(--error-color);
-
-  font-size: 0.77rem;
 }
 
+/* Password Toggle Styles */
 .input-wrapper {
   position: relative;
-
   display: flex;
   align-items: center;
-
   width: 100%;
 }
 
 .input-wrapper .input-field {
   width: 100%;
+  box-sizing: border-box; /* Ensure padding doesn't affect width */
 }
 
 .input-with-toggle {
-  padding-right: 4.2rem;
+  padding-right: 4.5rem; /* Make room for the toggle button */
 }
 
 .password-toggle-btn {
   position: absolute;
-  right: 0.45rem;
-
-  padding: 0.45rem;
-
-  border: 0;
-  border-radius: 6px;
-
+  right: 0.5rem;
   background: transparent;
-
-  color: var(--accent-color);
-
+  border: none;
+  color: var(--primary-color);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
   cursor: pointer;
-
-  font-size: 0.73rem;
-  font-weight: 750;
-
-  letter-spacing: 0;
-  text-transform: none;
+  padding: 0.5rem;
+  transition: opacity 0.2s ease;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
 }
 
 .password-toggle-btn:hover {
-  background: var(--accent-soft);
+  opacity: 1;
 }
 
-.password-toggle-btn:focus-visible {
-  outline:
-    2px solid var(--accent-color);
-
-  outline-offset: 1px;
+.password-toggle-btn:focus {
+  outline: 1px solid var(--primary-color);
+  border-radius: 2px;
 }
 
+/* Button Styles */
 .btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
   display: flex;
   justify-content: center;
   align-items: center;
-
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   width: 100%;
-  min-height: 44px;
-
-  padding: 0.75rem 1.2rem;
-
-  border: 0;
-  border-radius: 8px;
-
-  cursor: pointer;
-
-  font-size: 0.9rem;
-  font-weight: 700;
-
-  letter-spacing: 0;
-  text-transform: none;
-
-  transition:
-    background 0.18s ease,
-    border-color 0.18s ease,
-    box-shadow 0.18s ease,
-    transform 0.18s ease;
 }
 
 .btn:disabled {
-  opacity: 0.6;
+  opacity: 0.7;
   cursor: not-allowed;
 }
 
 .btn-primary {
-  background: var(--primary-color);
-  color: #ffffff;
+  background-color: var(--primary-color);
+  color: #000;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--primary-strong);
-
-  box-shadow:
-    0 7px 18px
-    rgba(
-      16,
-      42,
-      67,
-      0.16
-    );
+  background-color: #00e6b8;
+  box-shadow: 0 0 15px rgba(0, 255, 204, 0.4);
 }
 
 .btn-outline {
-  border:
-    1px solid var(--primary-color);
-
-  background: #ffffff;
-
+  background-color: transparent;
+  border: 1px solid var(--primary-color);
   color: var(--primary-color);
 }
 
 .btn-outline:hover:not(:disabled) {
-  background: var(--primary-soft);
+  background-color: rgba(0, 255, 204, 0.1);
 }
 
+/* Spinner for Loading State */
 .spinner {
   display: inline-block;
-
-  width: 1.1rem;
-  height: 1.1rem;
-
-  border:
-    2px solid
-    rgba(
-      255,
-      255,
-      255,
-      0.35
-    );
-
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 2px solid rgba(0,0,0,0.3);
   border-radius: 50%;
-
-  border-top-color: #ffffff;
-
-  animation:
-    spin
-    0.8s
-    linear
-    infinite;
+  border-top-color: #000;
+  animation: spin 1s ease-in-out infinite;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }

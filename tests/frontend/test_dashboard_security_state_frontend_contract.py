@@ -19,7 +19,7 @@ BACKEND_DASHBOARD = (
 
 SERVICE = (
     ROOT
-    / "frontend"
+    / "security-frontend"
     / "src"
     / "services"
     / "dashboardService.js"
@@ -27,7 +27,7 @@ SERVICE = (
 
 CARD = (
     ROOT
-    / "frontend"
+    / "security-frontend"
     / "src"
     / "components"
     / "dashboard"
@@ -36,7 +36,7 @@ CARD = (
 
 DASHBOARD = (
     ROOT
-    / "frontend"
+    / "security-frontend"
     / "src"
     / "pages"
     / "dashboard"

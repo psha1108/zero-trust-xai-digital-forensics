@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 AXIOS_PATH = (
     ROOT
-    / "frontend"
+    / "dummy"
     / "src"
     / "api"
     / "axios.js"
@@ -28,7 +28,7 @@ AXIOS_PATH = (
 
 AUTH_SERVICE_PATH = (
     ROOT
-    / "frontend"
+    / "dummy"
     / "src"
     / "services"
     / "authService.js"
@@ -36,7 +36,7 @@ AUTH_SERVICE_PATH = (
 
 RESOURCE_VIEW_PATH = (
     ROOT
-    / "frontend"
+    / "dummy"
     / "src"
     / "components"
     / "resources"
@@ -46,7 +46,7 @@ RESOURCE_VIEW_PATH = (
 
 VITE_CONFIG_PATH = (
     ROOT
-    / "frontend"
+    / "dummy"
     / "vite.config.js"
 )
 

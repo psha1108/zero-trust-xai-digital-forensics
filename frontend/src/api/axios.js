@@ -26,8 +26,6 @@ axiosInstance.interceptors.response.use(
       console.warn(
         'Session expired, blocked, or unauthorized. Please authenticate again.'
       );
-
-      window.dispatchEvent(new CustomEvent('session_expired'));
     }
 
     return Promise.reject(error);

@@ -41,7 +41,7 @@ const Login = () => {
       } else if (err.response && err.response.status === 401) {
         setError('Invalid username or password.');
       } else {
-        setError('Unable to sign in. Please verify your credentials.');
+        setError('Login failed securely. Please verify your credentials.');
       }
     } finally {
       setIsLoading(false);
@@ -52,8 +52,8 @@ const Login = () => {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-header">
-          <h1 className="auth-title">ACME Technologies</h1>
-          <p className="auth-subtitle">Sign in to the Internal Corporate Portal</p>
+          <h1 className="auth-title">ACME Corporate Portal</h1>
+          <p className="auth-subtitle">Employee and Authorized User Login</p>
         </div>
         
         {error && <div className="auth-error" role="alert">{error}</div>}
@@ -80,7 +80,7 @@ const Login = () => {
           />
           
           <Button type="submit" isLoading={isLoading} aria-live="polite">
-            Sign In
+            Authenticate
           </Button>
         </form>
 

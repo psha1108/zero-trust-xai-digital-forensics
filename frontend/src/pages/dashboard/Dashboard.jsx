@@ -9,132 +9,73 @@ import './Dashboard.css';
 const Dashboard = () => {
   const { user } = useAuth();
 
-  const displayName = user?.username || 'Employee';
-
   return (
     <div className="dashboard-container">
-      <div className="page-heading-block">
-        <p className="page-eyebrow">
-          ACME Technologies
-        </p>
-
-        <h1 className="page-title">
-          Welcome back, {displayName}
-        </h1>
-
-        <p className="page-subtitle">
-          Operations Department ? Employee Portal
-        </p>
-      </div>
+      <h1 className="page-title">
+        Corporate Portal
+      </h1>
 
       <div className="dashboard-grid">
-        <Card title="Quick Access">
-          <div className="portal-link-list">
-            <Link to="/documents">
-              Company Documents ?
-            </Link>
-
-            <Link to="/tasks">
-              My Tasks ?
-            </Link>
-
-            <Link to="/hr">
-              HR &amp; People ?
-            </Link>
-
-            <Link to="/it-support">
-              IT Support ?
-            </Link>
-          </div>
-        </Card>
-
-        <Card title="My Tasks">
-          <div className="portal-stat">
-            <strong>3</strong>
-            <span>Pending tasks</span>
-          </div>
-
+        <Card
+          title="Welcome"
+          className="full-width"
+        >
           <p>
-            One task is due within the next seven days.
+            Welcome, <strong>{user?.username || 'User'}</strong>.
           </p>
 
-          <Link to="/tasks">
-            View Tasks ?
+          <p>
+            Signed-in role:{' '}
+            <strong>{user?.role || 'Not available'}</strong>
+          </p>
+
+          <p>
+            Use the portal to access organizational
+            documents and resources available to your account.
+          </p>
+        </Card>
+
+        <Card title="General Documents">
+          <p>
+            Access general organizational information
+            and shared documents.
+          </p>
+
+          <Link to="/resources/normal">
+            Open General Documents
           </Link>
         </Card>
 
-        <Card title="My Sessions">
-          <div className="portal-status-row">
-            <span className="portal-status-dot" />
-            <span>
-              Current session active
-            </span>
-          </div>
-
+        <Card title="HR Documents">
           <p>
-            Review your current account session and
-            recent sign-in information.
+            Access human-resources documents and
+            employee information.
           </p>
 
-          <Link to="/sessions">
-            View Sessions ?
+          <Link to="/resources/hr">
+            Open HR Documents
           </Link>
         </Card>
 
-        <Card
-          title="Recent Activity"
-          className="full-width"
-        >
-          <ul className="portal-activity-list">
-            <li>
-              Viewed Employee Handbook
-            </li>
+        <Card title="Finance Reports">
+          <p>
+            Access finance-related reports and
+            protected financial resources.
+          </p>
 
-            <li>
-              Checked Company Policies
-            </li>
-
-            <li>
-              Reviewed assigned tasks
-            </li>
-          </ul>
+          <Link to="/resources/finance">
+            Open Finance Reports
+          </Link>
         </Card>
 
-        <Card
-          title="Announcements"
-          className="full-width"
-        >
-          <div className="announcement-preview-list">
-            <div>
-              <strong>
-                September Team Meeting
-              </strong>
-              <span>
-                Monthly all-hands meeting scheduled for 8 September.
-              </span>
-            </div>
+        <Card title="Admin Controls">
+          <p>
+            Administrative functions are protected
+            according to your assigned access privileges.
+          </p>
 
-            <div>
-              <strong>
-                Updated Leave Policy
-              </strong>
-              <span>
-                The revised leave policy is now available in Company Policies.
-              </span>
-            </div>
-
-            <div>
-              <strong>
-                Scheduled IT Maintenance
-              </strong>
-              <span>
-                Internal systems maintenance is planned this weekend.
-              </span>
-            </div>
-          </div>
-
-          <Link to="/announcements">
-            View All Announcements ?
+          <Link to="/resources/admin">
+            Open Admin Controls
           </Link>
         </Card>
       </div>

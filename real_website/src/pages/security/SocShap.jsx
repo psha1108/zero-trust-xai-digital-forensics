@@ -2,6 +2,20 @@ import React, { useState, useEffect } from "react";
 import forensicsService from "../../services/forensicsService";
 import "../dashboard/Dashboard.css";
 
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return 'N/A';
+
+  const normalized = timestamp.endsWith('Z')
+    ? timestamp
+    : `${timestamp}Z`;
+
+  const date = new Date(normalized);
+
+  if (Number.isNaN(date.getTime())) return timestamp;
+
+  return date.toLocaleString();
+};
+
 const SocShap = () => {
   const [evidence, setEvidence] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,17 +26,19 @@ const SocShap = () => {
 
   if (loading) return <div className="dashboard-container">Loading SHAP Explanations...</div>;
 
-  const shapData = evidence.filter(e => e.details?.shap && e.details.shap.explanation && Array.isArray(e.details.shap.explanation.contributions));
+  const shapData = evidence
+    .filter(e => e.details?.shap && e.details.shap.explanation && Array.isArray(e.details.shap.explanation.contributions))
+    .sort((a, b) => b.evidence_id - a.evidence_id);
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-container" style={{ height: "auto", minHeight: "100%" }}>
       <h1>SHAP / XAI Explanations</h1>
       {shapData.length === 0 ? <p>No SHAP explanations available.</p> : (
         <div style={{display:"flex", flexDirection:"column", gap:"20px"}}>
           {shapData.map(e => (
             <div key={e.evidence_id} className="dashboard-card">
               <h3>Event ID: {e.details?.event?.event_id || e.evidence_id} | Type: {e.details?.event?.event_type || e.details?.event_type || e.event_type || "Unknown"}</h3>
-              <p><strong>Timestamp:</strong> {e.timestamp}</p>
+              <p><strong>Timestamp:</strong> {formatTimestamp(e.timestamp)}</p>
               <p><strong>User:</strong> {e.user}</p>
               <p><strong>Resource:</strong> {e.resource}</p>
               <p><strong>RF Prediction:</strong> {e.details.shap.prediction}</p>

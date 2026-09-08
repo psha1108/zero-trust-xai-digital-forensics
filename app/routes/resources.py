@@ -11,6 +11,7 @@ from app.services.otp_service import (
 )
 from app.services.policy_enforcement import apply_zero_trust_policy
 from app.services.risk_analysis import analyze_operational_access
+from app.services.explanations import generate_shap_explanation, generate_policy_explanation
 from app.utils.fingerprint import get_device_fingerprint
 from app.utils.forensics_utils import preserve_evidence
 
@@ -40,6 +41,10 @@ RESOURCE_SENSITIVITY = {
     "admin_page": "high",
     "management_reports": "high",
     "confidential_page": "high",
+    "it_support": "low",
+    "tasks_page": "low",
+    "policies_page": "low",
+    "announcements_page": "low",
 }
 
 
@@ -70,6 +75,35 @@ RESOURCE_ALLOWED_ROLES = {
     },
     "management_reports": {
         "admin",
+        "finance_user",
+    },
+    "it_support": {
+        "admin",
+        "employee",
+        "finance_user",
+        "guest",
+        "hr_user",
+    },
+    "tasks_page": {
+        "admin",
+        "employee",
+        "finance_user",
+        "guest",
+        "hr_user",
+    },
+    "policies_page": {
+        "admin",
+        "employee",
+        "finance_user",
+        "guest",
+        "hr_user",
+    },
+    "announcements_page": {
+        "admin",
+        "employee",
+        "finance_user",
+        "guest",
+        "hr_user",
     },
 }
 
@@ -94,6 +128,22 @@ RESOURCE_MESSAGES = {
     "management_reports": (
         "Management Reports",
         "Internal management reports for authorized finance and administrative personnel.",
+    ),
+    "it_support": (
+        "IT Support",
+        "Access IT policies, device guidelines, and support resources.",
+    ),
+    "tasks_page": (
+        "My Tasks",
+        "Your current ACME Technologies work items.",
+    ),
+    "policies_page": (
+        "Company Policies",
+        "Employee policies and workplace guidance.",
+    ),
+    "announcements_page": (
+        "Announcements",
+        "Company news and employee notices.",
     ),
 }
 
@@ -324,6 +374,13 @@ def _log_analyze_and_enforce_access(
                 )
             }
         }
+        
+        details["shap"]["human_explanation"] = generate_shap_explanation(details["shap"])
+        details["zero_trust"]["human_reason"] = generate_policy_explanation(
+            details["zero_trust"]["policy_decision"],
+            policy_result.get("reason_codes", [])
+        )
+        
         preserve_evidence(anchor_login_id, details)
         
     # 9. Handle session termination AFTER evidence preservation
@@ -373,6 +430,17 @@ def _resource_response(
     resource_key: str,
 ):
     """Apply Zero Trust and satisfy OTP only with a valid grant."""
+    
+    session_id = _get_session_id()
+    session_row = Session.query.filter_by(
+        session_id=session_id, is_active=True
+    ).first()
+    
+    if not session_row:
+        return jsonify({
+            "error": "Session is invalid or has been terminated.",
+            "policy_action": "Block"
+        }), 401
 
     (
         event,
@@ -391,6 +459,7 @@ def _resource_response(
             session_id=event.session_id,
             user_id=current_user.id,
             resource=resource_key,
+            current_reason_codes=policy_result.get("reason_codes", []),
         ):
             return _successful_resource_response(
                 resource_key
@@ -401,6 +470,7 @@ def _resource_response(
             user_id=current_user.id,
             resource=resource_key,
             delivery_target=current_user.email,
+            reason_codes=policy_result.get("reason_codes", []),
         )
 
         return jsonify({
@@ -493,3 +563,52 @@ def admin_page():
     return _resource_response(
         "admin_page"
     )
+
+
+@resources_bp.route(
+    "/it-support",
+    methods=["GET"],
+)
+@login_required
+def it_support_page():
+    """Protected IT support resource."""
+    return _resource_response(
+        "it_support"
+    )
+
+
+@resources_bp.route(
+    "/tasks",
+    methods=["GET"],
+)
+@login_required
+def tasks_page():
+    """Protected tasks resource."""
+    return _resource_response(
+        "tasks_page"
+    )
+
+
+@resources_bp.route(
+    "/policies",
+    methods=["GET"],
+)
+@login_required
+def policies_page():
+    """Protected policies resource."""
+    return _resource_response(
+        "policies_page"
+    )
+
+
+@resources_bp.route(
+    "/announcements",
+    methods=["GET"],
+)
+@login_required
+def announcements_page():
+    """Protected announcements resource."""
+    return _resource_response(
+        "announcements_page"
+    )
+

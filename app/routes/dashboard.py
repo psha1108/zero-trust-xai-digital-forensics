@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, session as flask_session
 from flask_login import login_required, current_user
-from app.models import Session, LoginEvent, AccessEvent
+import json
+from app.models import Session, LoginEvent, AccessEvent, EvidenceLog
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/api/dashboard")
 
@@ -622,6 +623,20 @@ def soc_security_alerts():
 
         else:
             continue
+            
+        evidence_data = None
+        session_row = Session.query.filter_by(session_id=event.session_id).first()
+        if session_row and session_row.login_event_id:
+            evidence_logs = EvidenceLog.query.filter_by(login_event_id=session_row.login_event_id).all()
+            for log in evidence_logs:
+                try:
+                    data = json.loads(log.details)
+                    if data.get("access_event_id") == event.id:
+                        evidence_data = data
+                        evidence_data["record_hash"] = log.record_hash
+                        break
+                except Exception:
+                    pass
 
         result.append({
             "event_id": event.id,
@@ -641,7 +656,56 @@ def soc_security_alerts():
             "session_id": event.session_id,
             "user_id": event.user_id,
             "username": _soc_username(event.user_id),
+            "evidence_data": evidence_data,
         })
+
+    # Add standalone SessionTermination EvidenceLogs
+    termination_logs = (
+        EvidenceLog.query
+        .order_by(EvidenceLog.id.desc())
+        .limit(50)
+        .all()
+    )
+    
+    for log in termination_logs:
+        try:
+            details = json.loads(log.details)
+            event_type = details.get("event", {}).get("event_type") or details.get("event_type")
+            if event_type == "SessionTermination":
+                timestamp_str = details.get("timestamp")
+                user_data = details.get("user", {})
+                result.append({
+                    "event_id": f"term_{log.id}",
+                    "evidence_id": log.id,
+                    "event_type": "SessionTermination",
+                    "timestamp": timestamp_str,
+                    "severity": "high",
+                    "alert_type": "SESSION_TERMINATED",
+                    "message": "Session terminated after failed verification.",
+                    "resource": None,
+                    "policy_action": details.get("policy_action"),
+                    "action_taken": "Session Terminated",
+                    "termination_reason": details.get("termination_reason"),
+                    "session_outcome": details.get("session_outcome"),
+                    "explanation": details.get("explanation"),
+                    "previous_session_state": details.get("previous_session_state"),
+                    "current_session_state": details.get("current_session_state"),
+                    "session_id": details.get("session_id"),
+                    "user_id": user_data.get("user_id") or details.get("user_id"),
+                    "username": user_data.get("username") or details.get("username", "Unknown"),
+                    "evidence_data": {
+                        "record_hash": log.record_hash,
+                        "zero_trust": {
+                            "human_reason": details.get("explanation")
+                        }
+                    }
+                })
+        except Exception:
+            pass
+
+    # Sort results descending by timestamp and take top 20
+    result.sort(key=lambda x: x["timestamp"] or "", reverse=True)
+    result = result[:20]
 
     return jsonify(result), 200
 

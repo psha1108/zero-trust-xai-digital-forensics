@@ -147,12 +147,32 @@ const ForensicReport = () => {
         )}
 
         <h2>9. SHAP EXPLANATION</h2>
-        <p>SHAP Explanation: Not available</p>
+        {report.incident_timeline.some(e => e.shap && e.shap.human_explanation) ? (
+          <ul>
+            {report.incident_timeline.filter(e => e.shap && e.shap.human_explanation).map((e, i) => (
+              <li key={i} style={{ marginBottom: '10px' }}>
+                [{formatDateIST(e.timestamp)}] {e.action}:<br/>
+                <em>{e.shap.human_explanation}</em>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>SHAP Explanation: Not available</p>
+        )}
 
         <h2>10. ZERO TRUST / ACCESS CONTROL ANALYSIS</h2>
         <ul>
           {report.incident_timeline.map((e, i) => (
-            <li key={i}>[{formatDateIST(e.timestamp)}] {e.action}: <strong>Decision: {e.result ? e.result.toUpperCase() : 'NOT AVAILABLE'}</strong></li>
+            <li key={i} style={{ marginBottom: '15px' }}>
+              <div style={{ fontWeight: 'bold' }}>[{formatDateIST(e.timestamp)}] {e.action}</div>
+              <ul style={{ listStyleType: 'circle', paddingLeft: '20px', marginTop: '5px' }}>
+                <li><strong>Policy Decision:</strong> {e.policy_decision || e.result || 'N/A'}</li>
+                {e.policy_reason && <li><strong>Zero Trust Reason:</strong> {e.policy_reason}</li>}
+                <li><strong>Action Taken:</strong> {e.action_taken || e.action || 'N/A'}</li>
+                {e.session_outcome && <li><strong>Session Outcome:</strong> {e.session_outcome}</li>}
+                {e.termination_reason && <li><strong>Termination Reason:</strong> {e.termination_reason}</li>}
+              </ul>
+            </li>
           ))}
         </ul>
 
@@ -161,6 +181,9 @@ const ForensicReport = () => {
           <li>Total Access Events: {report.investigation_findings.total_access_events}</li>
           <li>Blocked/Denied Accesses: {report.investigation_findings.blocked_access_events}</li>
           <li>Privilege Mismatches: {report.investigation_findings.privilege_mismatches}</li>
+          {report.investigation_findings.session_terminations !== undefined && (
+            <li>Session Terminations: {report.investigation_findings.session_terminations}</li>
+          )}
         </ul>
 
         <h2>12. INTEGRITY VERIFICATION RESULT</h2>

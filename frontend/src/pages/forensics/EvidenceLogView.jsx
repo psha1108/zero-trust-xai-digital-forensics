@@ -77,20 +77,54 @@ const EvidenceLogView = () => {
                 <th>Event Type</th>
                 <th>Login Event ID</th>
                 <th>Record Hash</th>
+                <th>SHAP Details</th>
               </tr>
             </thead>
             <tbody>
-              {evidence.map(log => (
-                <tr key={log.id}>
-                  <td>{log.id}</td>
-                  <td>{formatDateIST(log.created_at)}</td>
-                  <td>{log.details?.event_type || 'Unknown'}</td>
-                  <td>{log.login_event_id}</td>
-                  <td style={{ fontFamily: 'monospace', fontSize: '0.85em' }}>
-                    {log.record_hash ? log.record_hash.substring(0, 16) + '...' : 'N/A'}
-                  </td>
-                </tr>
-              ))}
+              {evidence.map(log => {
+                const eventType = log.details?.event?.event_type || log.details?.event_type || 'Unknown';
+                const shap = log.details?.shap;
+                const isSessionTerm = eventType === 'SessionTermination';
+
+                return (
+                  <tr key={log.id}>
+                    <td>{log.id}</td>
+                    <td>{formatDateIST(log.created_at)}</td>
+                    <td>{eventType}</td>
+                    <td>{log.login_event_id}</td>
+                    <td style={{ fontFamily: 'monospace', fontSize: '0.85em' }}>
+                      {log.record_hash ? log.record_hash.substring(0, 16) + '...' : 'N/A'}
+                    </td>
+                    <td>
+                      {isSessionTerm ? (
+                        <span style={{ color: '#888' }}>SHAP: Not applicable for this event</span>
+                      ) : shap ? (
+                        <details>
+                          <summary style={{ cursor: 'pointer', color: '#0056b3' }}>View SHAP</summary>
+                          <div style={{ fontSize: '0.85em', marginTop: '5px', padding: '5px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                            <p style={{ margin: '0 0 5px 0' }}><strong>RF Prediction:</strong> {shap.prediction || 'N/A'} (Prob: {shap.model_probability})</p>
+                            <p style={{ margin: '0 0 5px 0' }}><strong>Base Value:</strong> {shap.explanation?.base_value?.toFixed(4) || 'N/A'}</p>
+                            <div style={{ margin: '0 0 5px 0' }}>
+                              <strong>Contributions:</strong>
+                              <ul style={{ margin: '2px 0', paddingLeft: '20px' }}>
+                                {shap.explanation?.contributions?.map((c, i) => (
+                                  <li key={i}>{c.feature_name}: {c.contribution > 0 ? '+' : ''}{c.contribution.toFixed(4)}</li>
+                                )) || <li>N/A</li>}
+                              </ul>
+                            </div>
+                            <p style={{ margin: '0', fontStyle: 'italic' }}>
+                              <strong>Human-readable explanation:</strong><br/>
+                              {shap.human_explanation || 'Detailed SHAP explanation unavailable for this event.'}
+                            </p>
+                          </div>
+                        </details>
+                      ) : (
+                        <span style={{ color: '#888' }}>SHAP: Not available</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

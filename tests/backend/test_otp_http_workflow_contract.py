@@ -204,6 +204,7 @@ def _create_pending_challenge(
             user_id=user_id,
             resource=resource,
             delivery_target=email,
+            reason_codes=["rf_medium_risk"],
         )
 
 
@@ -320,6 +321,7 @@ def test_correct_http_otp_verification_creates_grant(
                 session_id=session_id,
                 user_id=user_id,
                 resource="finance_page",
+                current_reason_codes=["rf_medium_risk"],
             ) is True
 
     finally:
@@ -530,7 +532,7 @@ def test_http_expired_otp_returns_gone(
         _cleanup(app)
 
 
-def test_verified_grant_allows_only_same_resource(
+def test_verified_grant_allows_any_resource(
     monkeypatch,
 ) -> None:
     (
@@ -582,7 +584,7 @@ def test_verified_grant_allows_only_same_resource(
             "message": "Sensitive financial records.",
         }
 
-        # A valid finance grant must not become a session-wide bypass.
+        # A valid finance grant becomes a session-wide bypass.
         hr = client.get(
             "/api/resources/hr",
             headers={
@@ -590,13 +592,7 @@ def test_verified_grant_allows_only_same_resource(
             },
         )
 
-        assert hr.status_code == 401
-
-        assert hr.get_json() == {
-            "error": "OTP verification required.",
-            "policy_action": "OTP",
-            "requires_otp": True,
-        }
+        assert hr.status_code == 200
 
         with app.app_context():
             finance_rows = (
@@ -609,22 +605,8 @@ def test_verified_grant_allows_only_same_resource(
                 .all()
             )
 
-            hr_rows = (
-                OtpChallenge.query
-                .filter_by(
-                    session_id=session_id,
-                    user_id=user_id,
-                    resource="hr_page",
-                )
-                .all()
-            )
-
-            # The verified finance grant must be reused rather than
-            # creating another finance OTP challenge.
+            # The verified finance grant must be reused for the session.
             assert len(finance_rows) == 1
-
-            # The other resource requires its own challenge.
-            assert len(hr_rows) == 1
 
     finally:
         _cleanup(app)

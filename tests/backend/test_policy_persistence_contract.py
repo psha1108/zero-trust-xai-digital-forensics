@@ -454,16 +454,21 @@ def test_block_persists_and_terminates_session(
             0.95,
             abs=1e-15,
         )
-
         assert session_row.current_risk_score == pytest.approx(
             0.95,
             abs=1e-15,
         )
         assert session_row.current_risk_label == "high"
 
-        assert session_row.is_active is False
-        assert session_row.ended_at is not None
-        assert session_row.end_reason == "blocked"
+        assert result["risk_score"] == 0.95
+
+        # Session termination has moved to the caller so the
+        # session should STILL be active here!
+        db.session.expire_all()
+        session_row = db.session.get(Session, session_row_id)
+        assert session_row.is_active is True
+        assert session_row.ended_at is None
+        assert session_row.end_reason is None
 
 
 def test_invalid_probability_high_is_rejected_without_db_mutation(

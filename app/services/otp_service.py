@@ -147,6 +147,7 @@ def create_otp_challenge(
     user_id: int,
     resource: str,
     delivery_target: str,
+    reason_codes: list[str] = None,
 ) -> dict[str, int | str]:
     """Create or reuse a pending OTP challenge."""
 
@@ -210,6 +211,7 @@ def create_otp_challenge(
         failed_attempts=0,
         max_attempts=OTP_MAX_ATTEMPTS,
         verified_at=None,
+        granted_reason_codes=", ".join(reason_codes) if reason_codes else None,
     )
 
     try:
@@ -352,6 +354,7 @@ def has_valid_otp_grant(
     session_id: str,
     user_id: int,
     resource: str,
+    current_reason_codes: list[str] = None,
 ) -> bool:
     """Return whether a valid resource-scoped OTP grant exists."""
 
@@ -377,7 +380,6 @@ def has_valid_otp_grant(
         .filter(
             OtpChallenge.session_id == session_id,
             OtpChallenge.user_id == user_id,
-            OtpChallenge.resource == resource,
             OtpChallenge.verified_at.is_not(None),
         )
         .order_by(
@@ -397,8 +399,20 @@ def has_valid_otp_grant(
         - challenge.verified_at
     ).total_seconds()
 
-    return (
-        0.0
-        <= grant_age
-        <= OTP_GRANT_TTL_SECONDS
-    )
+    if not (0.0 <= grant_age <= OTP_GRANT_TTL_SECONDS):
+        return False
+
+    if challenge.granted_reason_codes is None:
+        return False
+
+    if current_reason_codes is not None:
+        granted_reasons = {r.strip() for r in challenge.granted_reason_codes.split(",")}
+        granted_reasons = {r for r in granted_reasons if r and r != "No reason provided"}
+        
+        current_reasons = set(current_reason_codes)
+        current_reasons = {r for r in current_reasons if r and r != "No reason provided"}
+
+        if current_reasons != granted_reasons:
+            return False
+
+    return True

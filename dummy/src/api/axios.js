@@ -51,6 +51,16 @@ axiosInstance.interceptors.response.use(
       });
     }
 
+    const isSessionTerminated =
+      (response?.status === 401 && payload?.policy_action === 'Block') ||
+      (response?.status === 423 && payload?.error === 'OTP challenge locked.');
+
+    if (isSessionTerminated) {
+      console.warn('Session terminated. Automatically logging out.');
+      window.dispatchEvent(new CustomEvent('session_expired'));
+      return Promise.reject(error);
+    }
+
     // Other 401 responses are authentication/session issues.
     if (response?.status === 401) {
       console.warn(

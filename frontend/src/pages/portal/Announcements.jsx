@@ -1,23 +1,15 @@
 import React from 'react';
 
 import Card from '../../components/dashboard/Card';
+import ResourceView from '../../components/resources/ResourceView';
+import resourceService from '../../services/resourceService';
 
 const Announcements = () => (
-  <div className="dashboard-container">
-    <div className="page-heading-block">
-      <p className="page-eyebrow">
-        Workspace
-      </p>
-
-      <h1 className="page-title">
-        Announcements
-      </h1>
-
-      <p className="page-subtitle">
-        Company news and employee notices.
-      </p>
-    </div>
-
+  <ResourceView
+    pageName="Announcements"
+    subtitle="Company news and employee notices."
+    fetchFn={resourceService.getAnnouncements}
+  >
     <Card title="Company Announcements">
       <div className="announcement-list">
         <article>
@@ -65,7 +57,7 @@ const Announcements = () => (
         Announcement information is synthetic demonstration data.
       </p>
     </Card>
-  </div>
+  </ResourceView>
 );
 
 export default Announcements;

@@ -212,6 +212,11 @@ class OtpChallenge(db.Model):
         nullable=True,
     )
 
+    granted_reason_codes = db.Column(
+        db.String(255),
+        nullable=True,
+    )
+
 class SocAuditLog(db.Model):
     __tablename__ = "soc_audit_logs"
 

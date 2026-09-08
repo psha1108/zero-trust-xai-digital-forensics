@@ -1,23 +1,15 @@
 import React from 'react';
 
 import Card from '../../components/dashboard/Card';
+import ResourceView from '../../components/resources/ResourceView';
+import resourceService from '../../services/resourceService';
 
 const Tasks = () => (
-  <div className="dashboard-container">
-    <div className="page-heading-block">
-      <p className="page-eyebrow">
-        Workspace
-      </p>
-
-      <h1 className="page-title">
-        My Tasks
-      </h1>
-
-      <p className="page-subtitle">
-        Your current ACME Technologies work items.
-      </p>
-    </div>
-
+  <ResourceView
+    pageName="My Tasks"
+    subtitle="Your current ACME Technologies work items."
+    fetchFn={resourceService.getTasks}
+  >
     <Card title="Assigned Tasks">
       <div className="task-list">
         <div>
@@ -52,7 +44,7 @@ const Tasks = () => (
         Task information is synthetic demonstration data.
       </p>
     </Card>
-  </div>
+  </ResourceView>
 );
 
 export default Tasks;

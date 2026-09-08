@@ -1,23 +1,15 @@
 import React from 'react';
 
 import Card from '../../components/dashboard/Card';
+import ResourceView from '../../components/resources/ResourceView';
+import resourceService from '../../services/resourceService';
 
 const Policies = () => (
-  <div className="dashboard-container">
-    <div className="page-heading-block">
-      <p className="page-eyebrow">
-        Workspace
-      </p>
-
-      <h1 className="page-title">
-        Company Policies
-      </h1>
-
-      <p className="page-subtitle">
-        Employee policies and workplace guidance.
-      </p>
-    </div>
-
+  <ResourceView
+    pageName="Company Policies"
+    subtitle="Employee policies and workplace guidance."
+    fetchFn={resourceService.getPolicies}
+  >
     <Card title="Policy Library">
       <div className="document-list">
         <div>
@@ -55,7 +47,7 @@ const Policies = () => (
         Policy documents are synthetic demonstration content.
       </p>
     </Card>
-  </div>
+  </ResourceView>
 );
 
 export default Policies;

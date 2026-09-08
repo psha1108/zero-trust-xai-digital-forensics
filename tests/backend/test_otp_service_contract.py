@@ -311,7 +311,7 @@ def test_pending_challenge_is_reused_not_duplicated(
         ]
 
 
-def test_correct_otp_creates_resource_scoped_step_up_grant(
+def test_correct_otp_creates_session_scoped_step_up_grant(
     database_app,
     monkeypatch,
 ) -> None:
@@ -375,12 +375,11 @@ def test_correct_otp_creates_resource_scoped_step_up_grant(
             resource="finance_page",
         ) is True
 
-        # Step-up approval is not a universal session bypass.
         assert module.has_valid_otp_grant(
             session_id=session_id,
             user_id=user_id,
-            resource="admin_page",
-        ) is False
+            resource="hr_page",
+        ) is True
 
 
 def test_wrong_otp_increments_attempts_without_grant(

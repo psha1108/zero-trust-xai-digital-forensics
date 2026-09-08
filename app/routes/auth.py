@@ -158,6 +158,9 @@ def login():
             "user": {"id": user.id, "username": user.username, "role": user.role},
         }), 200
 
+    logout_user()
+    flask_session.pop("app_session_id", None)
+
     return jsonify({"error": "Invalid username or password."}), 401
 
 
@@ -219,6 +222,34 @@ def verify_otp():
         }), 400
 
     if status == "locked":
+        session_row = Session.query.filter_by(session_id=session_id, is_active=True).first()
+        if session_row:
+            session_row.is_active = False
+            session_row.ended_at = datetime.utcnow()
+            session_row.end_reason = "OTP_FAILED_ATTEMPTS"
+            
+            details = {
+                "event": {
+                    "event_type": "SessionTermination",
+                },
+                "session_id": session_id,
+                "timestamp": session_row.ended_at.isoformat(),
+                "user": {
+                    "user_id": current_user.id,
+                    "username": current_user.username,
+                    "role": current_user.role
+                },
+                "policy_action": "OTP",
+                "session_outcome": "Terminated",
+                "termination_reason": "OTP_FAILED_ATTEMPTS",
+                "explanation": "Step-up verification was required based on the security assessment. The session was subsequently terminated because the maximum permitted OTP verification attempts were unsuccessful.",
+                "previous_session_state": "Active",
+                "current_session_state": "Inactive"
+            }
+            preserve_evidence(session_row.login_event_id, details)
+            
+            db.session.commit()
+
         return jsonify({
             "error": "OTP challenge locked.",
             "verified": False,

@@ -377,20 +377,14 @@ def test_authorized_roles_can_access_management_reports(
 
         assert response.status_code == 200
 
-        assert response.get_json() == {
-            "title":
-                "Management Reports",
-
-            "sensitivity":
-                "high",
-
-            "message":
-                (
-                    "Internal management reports for "
-                    "authorized finance and administrative "
-                    "personnel."
-                ),
-        }
+        data = response.get_json()
+        assert data["title"] == "Management Reports"
+        assert data["sensitivity"] == "high"
+        assert data["message"] == (
+            "Internal management reports for "
+            "authorized finance and administrative "
+            "personnel."
+        )
 
         with app.app_context():
             event = (

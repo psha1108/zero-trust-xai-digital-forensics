@@ -137,6 +137,30 @@ def test_resource_response_uses_combined_log_and_analysis_helper(
         fake_enforced,
     )
 
+    class DummySessionRow:
+        is_active = True
+
+    class DummyQuery:
+        def filter_by(self, **kwargs):
+            return self
+        def first(self):
+            return DummySessionRow()
+
+    class DummySession:
+        query = DummyQuery()
+
+    monkeypatch.setattr(
+        resources,
+        "Session",
+        DummySession,
+    )
+
+    monkeypatch.setattr(
+        resources,
+        "_get_session_id",
+        lambda: "session-normal",
+    )
+
     def forbidden_old_path(resource):
         pytest.fail(
             "_resource_response must use the unified "
@@ -222,6 +246,30 @@ def test_denied_admin_access_is_logged_and_analyzed(
         resources,
         "_log_analyze_and_enforce_access",
         fake_enforced,
+    )
+
+    class DummySessionRow:
+        is_active = True
+
+    class DummyQuery:
+        def filter_by(self, **kwargs):
+            return self
+        def first(self):
+            return DummySessionRow()
+
+    class DummySession:
+        query = DummyQuery()
+
+    monkeypatch.setattr(
+        resources,
+        "Session",
+        DummySession,
+    )
+
+    monkeypatch.setattr(
+        resources,
+        "_get_session_id",
+        lambda: "session-denied-admin",
     )
 
     def forbidden_old_path(resource):

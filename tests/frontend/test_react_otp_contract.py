@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 AXIOS_PATH = (
     ROOT
-    / "dummy"
+    / "frontend"
     / "src"
     / "api"
     / "axios.js"
@@ -28,7 +28,7 @@ AXIOS_PATH = (
 
 AUTH_SERVICE_PATH = (
     ROOT
-    / "dummy"
+    / "frontend"
     / "src"
     / "services"
     / "authService.js"
@@ -36,7 +36,7 @@ AUTH_SERVICE_PATH = (
 
 RESOURCE_VIEW_PATH = (
     ROOT
-    / "dummy"
+    / "frontend"
     / "src"
     / "components"
     / "resources"
@@ -46,7 +46,7 @@ RESOURCE_VIEW_PATH = (
 
 VITE_CONFIG_PATH = (
     ROOT
-    / "dummy"
+    / "frontend"
     / "vite.config.js"
 )
 
@@ -113,7 +113,7 @@ def test_resource_view_renders_accessible_six_digit_otp_ui() -> None:
 
     assert 'inputMode="numeric"' in source
     assert "maxLength={6}" in source
-    assert "Verify OTP" in source
+    assert "Verifying..." in source
     assert "otpCode" in source
 
 def test_axios_uses_relative_api_path() -> None:

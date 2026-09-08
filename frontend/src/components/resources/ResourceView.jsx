@@ -172,6 +172,13 @@ const ResourceView = ({
     }
   };
 
+  const handleCancelOtp = () => {
+    setOtpRequired(false);
+    setOtpCode('');
+    setOtpError('');
+    setError('Verification cancelled.');
+  };
+
   return (
     <div className="resource-view-container">
       <div className="page-heading-block">
@@ -246,18 +253,28 @@ const ResourceView = ({
                 placeholder="000000"
               />
 
-              <button
-                className="otp-submit"
-                type="submit"
-                disabled={
-                  otpLoading ||
-                  otpCode.length !== 6
-                }
-              >
-                {otpLoading
-                  ? 'Verifying...'
-                  : 'Continue'}
-              </button>
+              <div className="otp-actions">
+                <button
+                  className="otp-submit"
+                  type="submit"
+                  disabled={
+                    otpLoading ||
+                    otpCode.length !== 6
+                  }
+                >
+                  {otpLoading
+                    ? 'Verifying...'
+                    : 'Continue'}
+                </button>
+                <button
+                  className="otp-cancel"
+                  type="button"
+                  onClick={handleCancelOtp}
+                  disabled={otpLoading}
+                >
+                  Cancel
+                </button>
+              </div>
             </form>
           </div>
         </Card>

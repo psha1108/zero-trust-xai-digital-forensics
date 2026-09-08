@@ -550,6 +550,9 @@ def test_admin_sees_cross_user_persisted_soc_state(
 
                 "username":
                     "socemployee",
+
+                "evidence_data":
+                    None,
             }
         ]
 

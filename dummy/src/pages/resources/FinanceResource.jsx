@@ -1,40 +1,80 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ResourceView from '../../components/resources/ResourceView';
 import resourceService from '../../services/resourceService';
+import Card from '../../components/dashboard/Card';
 import { FINANCE_DATA } from '../../data/financeData';
 
-const FinanceResource = () => {
+const FinanceList = ({ documents, onSelect }) => {
   return (
-    <ResourceView pageName="Finance" fetchFn={resourceService.getFinanceResource}>
-      <div style={{ padding: '10px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-          <div style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '5px' }}>
-            <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '10px', marginTop: 0 }}>Payroll Information</h3>
-            <p><strong>Employee ID:</strong> {FINANCE_DATA.payrollInfo.employeeId}</p>
-            <p><strong>Pay Period:</strong> {FINANCE_DATA.payrollInfo.payPeriod}</p>
-            <p><strong>Status:</strong> <span style={{ color: 'green' }}>{FINANCE_DATA.payrollInfo.status}</span></p>
-          </div>
-          <div style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '5px' }}>
-            <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '10px', marginTop: 0 }}>Expense Overview</h3>
-            <p><strong>Travel Expenses:</strong> {FINANCE_DATA.expenseOverview.travelExpenses}</p>
-            <p><strong>Office Expenses:</strong> {FINANCE_DATA.expenseOverview.officeExpenses}</p>
-            <p><strong>Learning Expenses:</strong> {FINANCE_DATA.expenseOverview.learningExpenses}</p>
-            <p><strong>Pending Reimbursement:</strong> <span style={{ color: '#d97706', fontWeight: 'bold' }}>{FINANCE_DATA.expenseOverview.pendingReimbursement}</span></p>
-          </div>
+    <div className="resource-grid">
+      {documents.map(doc => (
+        <div key={doc.id} className="resource-card-container">
+          <Card className="resource-card-content">
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                <h3 style={{ margin: 0, fontSize: '1.1em', paddingRight: '10px' }}>{doc.title}</h3>
+              </div>
+              <p style={{ margin: '0 0 15px 0', color: 'var(--text-secondary)', fontSize: '0.9em', flexGrow: 1 }}>
+                {doc.description}
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85em', color: 'var(--text-secondary)', marginBottom: '10px' }}>
+                <span>Version: {doc.version}</span>
+              </div>
+              <div style={{ fontSize: '0.8em', color: '#999', borderTop: '1px solid var(--border-color)', paddingTop: '10px', marginTop: '10px' }}>
+                Document ID: {doc.id}
+              </div>
+              <button className="resource-btn" onClick={() => onSelect(doc)}>VIEW</button>
+            </div>
+          </Card>
         </div>
+      ))}
+    </div>
+  );
+};
 
-        <div style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '5px' }}>
-          <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '10px', marginTop: 0 }}>Financial Documents</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {FINANCE_DATA.financialDocuments.map(doc => (
-              <div key={doc.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
-                <span>{doc.title}</span>
-                <span style={{ color: '#666', fontSize: '0.9em' }}>{doc.id}</span>
+const FinanceDetails = ({ doc, onBack }) => {
+  return (
+    <div>
+      <button className="resource-btn-back" onClick={onBack}>
+        &larr; BACK TO FINANCE
+      </button>
+      <Card>
+        <div style={{ padding: '20px' }}>
+          <h2 style={{ marginTop: 0, marginBottom: '10px', color: 'var(--primary-color)' }}>{doc.title}</h2>
+          <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '20px', display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+            <span><strong>Document ID:</strong> {doc.id}</span>
+            <span><strong>Category:</strong> {doc.category}</span>
+            <span><strong>Sensitivity:</strong> {doc.sensitivity}</span>
+            <span><strong>Version:</strong> {doc.version}</span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {doc.sections.map((section, idx) => (
+              <div key={idx} style={{ borderTop: '1px solid var(--border-color)', paddingTop: '15px' }}>
+                <h3 style={{ marginTop: 0, marginBottom: '10px' }}>{section.title}</h3>
+                <p style={{ lineHeight: '1.6', margin: 0, whiteSpace: 'pre-wrap' }}>{section.content}</p>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </Card>
+    </div>
+  );
+};
+
+const FinanceResource = () => {
+  const [selectedDoc, setSelectedDoc] = useState(null);
+
+  return (
+    <ResourceView pageName="Finance" fetchFn={resourceService.getFinanceResource}>
+      {selectedDoc ? (
+        <FinanceDetails doc={selectedDoc} onBack={() => setSelectedDoc(null)} />
+      ) : (
+        <div style={{ padding: '10px' }}>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '1.05em' }}>Access corporate finance policies, expense guidelines, and resources.</p>
+          <FinanceList documents={FINANCE_DATA} onSelect={setSelectedDoc} />
+        </div>
+      )}
     </ResourceView>
   );
 };

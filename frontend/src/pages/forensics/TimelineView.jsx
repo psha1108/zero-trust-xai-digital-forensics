@@ -68,12 +68,19 @@ const TimelineView = () => {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.9em' }}>
                     <div>
                       <strong>User ID:</strong> {event.user_id}<br />
-                      <strong>IP Address:</strong> {event.ip_address}<br />
-                      <strong>Result:</strong> {event.result}
+                      <strong>IP Address:</strong> {event.ip_address || 'N/A'}<br />
+                      <strong>Resource:</strong> {event.resource || 'N/A'}<br />
+                      <strong>Policy Decision:</strong> {event.policy_decision || event.result || 'N/A'}<br />
+                      {event.action_taken && <React.Fragment><strong>Action Taken:</strong> {event.action_taken}<br /></React.Fragment>}
+                      {event.session_outcome && <React.Fragment><strong>Session Outcome:</strong> {event.session_outcome}<br /></React.Fragment>}
+                      {event.termination_reason && <React.Fragment><strong>Termination Reason:</strong> {event.termination_reason}<br /></React.Fragment>}
                     </div>
                     <div>
-                      {event.privilege_mismatch && <div style={{color: '#dc3545'}}>Privilege Mismatch!</div>}
-                      {event.risk_label ? (
+                      {event.policy_reason && <div style={{ marginBottom: '5px' }}><strong>Zero Trust Reason:</strong> {event.policy_reason}</div>}
+                      {event.privilege_mismatch && <div style={{color: '#dc3545', marginBottom: '5px'}}>Privilege Mismatch!</div>}
+                      {event.event_type === 'SessionTermination' ? (
+                        <div style={{color: '#888'}}>ML / SHAP: N/A</div>
+                      ) : event.risk_label ? (
                         <div><strong>Risk:</strong> {event.risk_label} (Score: {event.risk_score || event.anomaly_score})</div>
                       ) : (
                         <div style={{color: '#888'}}>Risk Assessment: Not available</div>

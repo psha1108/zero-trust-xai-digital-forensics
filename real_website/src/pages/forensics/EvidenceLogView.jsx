@@ -189,26 +189,41 @@ const EvidenceLogView = () => {
               <div className="detail-section">
                 <h3>ZERO TRUST DECISION</h3>
                 <p><strong>Policy Decision:</strong> {selectedLog.policy_decision || 'N/A'}</p>
-                <p><strong>Action Taken:</strong> {selectedLog.policy_decision === 'Allow' ? 'Access Granted' : selectedLog.policy_decision === 'OTP' ? 'OTP Verification Required' : selectedLog.policy_decision === 'Restrict' ? 'Access Restricted' : selectedLog.policy_decision === 'Block' ? 'Access Blocked / Session Terminated' : 'N/A'}</p>
-                {(() => {
-                  const triggers = getTriggers(selectedLog.details?.zero_trust?.reason);
-                  return (
-                    <div>
-                      <strong>Trigger{triggers.length > 1 ? 's' : ''}: </strong>
-                      {triggers.length === 1 ? triggers[0] : (
-                        <ul style={{ margin: '5px 0 5px 20px' }}>
-                          {triggers.map((t, i) => <li key={i}>{t}</li>)}
-                        </ul>
-                      )}
-                      
-                      {selectedLog.policy_decision === 'OTP' && triggers.includes('Isolation Forest Anomaly') && selectedLog.details?.ml?.random_forest?.risk_label === 'low' && (
-                        <div style={{marginTop: '10px', padding: '10px', backgroundColor: '#fff3cd', color: '#856404', border: '1px solid #ffeeba', borderRadius: '4px'}}>
-                          <strong>Explanation:</strong> Step-up authentication was required because an Isolation Forest anomaly was detected, despite the Random Forest model classifying the current event as low risk.
-                        </div>
-                      )}
+                {selectedLog.event_type === 'SessionTermination' ? (
+                  <React.Fragment>
+                    <p><strong>Action Taken:</strong> {selectedLog.action_taken || 'Session Terminated'}</p>
+                    <p><strong>Session Outcome:</strong> {selectedLog.session_outcome || 'Terminated'}</p>
+                    <p><strong>Termination Reason:</strong> {selectedLog.termination_reason || 'N/A'}</p>
+                    <p><strong>Previous Session State:</strong> {selectedLog.details?.previous_session_state || 'Active'}</p>
+                    <p><strong>Current Session State:</strong> {selectedLog.details?.current_session_state || 'Inactive'}</p>
+                    <div style={{marginTop: '10px', padding: '10px', backgroundColor: '#fff3cd', color: '#856404', border: '1px solid #ffeeba', borderRadius: '4px'}}>
+                      <strong>Explanation:</strong> {selectedLog.details?.explanation || 'Session terminated because the maximum number of OTP verification attempts was exceeded.'}
                     </div>
-                  );
-                })()}
+                  </React.Fragment>
+                ) : (
+                  <React.Fragment>
+                    <p><strong>Action Taken:</strong> {selectedLog.policy_decision === 'Allow' ? 'Access Granted' : selectedLog.policy_decision === 'OTP' ? 'OTP Verification Required' : selectedLog.policy_decision === 'Restrict' ? 'Access Restricted' : selectedLog.policy_decision === 'Block' ? 'Access Blocked / Session Terminated' : 'N/A'}</p>
+                    {(() => {
+                      const triggers = getTriggers(selectedLog.details?.zero_trust?.reason);
+                      return (
+                        <div>
+                          <strong>Trigger{triggers.length > 1 ? 's' : ''}: </strong>
+                          {triggers.length === 1 ? triggers[0] : (
+                            <ul style={{ margin: '5px 0 5px 20px' }}>
+                              {triggers.map((t, i) => <li key={i}>{t}</li>)}
+                            </ul>
+                          )}
+                          
+                          {selectedLog.policy_decision === 'OTP' && triggers.includes('Isolation Forest Anomaly') && selectedLog.details?.ml?.random_forest?.risk_label === 'low' && (
+                            <div style={{marginTop: '10px', padding: '10px', backgroundColor: '#fff3cd', color: '#856404', border: '1px solid #ffeeba', borderRadius: '4px'}}>
+                              <strong>Explanation:</strong> Step-up authentication was required because an Isolation Forest anomaly was detected, despite the Random Forest model classifying the current event as low risk.
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </React.Fragment>
+                )}
                 <p style={{marginTop: '10px'}}><strong>HTTP Status:</strong> {selectedLog.details?.zero_trust?.http_status || 'N/A'}</p>
               </div>
 

@@ -11,7 +11,7 @@ from app.utils.forensics_utils import preserve_evidence
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
 
-def _log_login_event(username_attempted: str, success: bool, user_id: int | None, role: str | None = None, client_id: str | None = None) -> LoginEvent:
+def _log_login_event(username_attempted: str, success: bool, user_id: int | None, role: str | None = None, client_id: str | None = None, failed_login_count: int = 0) -> LoginEvent:
     event = LoginEvent(
         user_id=user_id,
         username_attempted=username_attempted,
@@ -44,7 +44,8 @@ def _log_login_event(username_attempted: str, success: bool, user_id: int | None
             "device_changed_during_session": False
         },
         "security": {
-            "success": event.success
+            "success": event.success,
+            "failed_login_count": failed_login_count
         }
     }
     if client_id == 'soc':
@@ -112,12 +113,21 @@ def login():
     user = User.query.filter_by(username=username).first()
     success = user is not None and user.check_password(password)
 
-    _log_login_event(
+    failed_count = 0
+    if user:
+        last_events = LoginEvent.query.filter_by(user_id=user.id).order_by(LoginEvent.timestamp.desc()).limit(3).all()
+        for e in last_events:
+            if e.success:
+                break
+            failed_count += 1
+
+    event = _log_login_event(
         username_attempted=username,
         success=success,
         user_id=user.id if user else None,
         role=user.role if user else None,
         client_id=client_id,
+        failed_login_count=failed_count
     )
 
     if success:
@@ -133,17 +143,16 @@ def login():
         device_fp = get_device_fingerprint(request.headers.get("User-Agent", ""))
         ip = request.remote_addr or "unknown"
 
-        login_event = LoginEvent.query.filter_by(
-            user_id=user.id, success=True
-        ).order_by(LoginEvent.id.desc()).first()
-        # the row _log_login_event() just wrote, moments ago, in this same request
-
-        login_event.session_id = new_session_id
+        event.session_id = new_session_id
+        
+        if failed_count >= 3:
+            event.risk_label = "Medium"
+            event.action_taken = "OTP Required"
 
         db.session.add(Session(
             session_id=new_session_id,
             user_id=user.id,
-            login_event_id=login_event.id,
+            login_event_id=event.id,
             started_at=datetime.utcnow(),
             start_ip=ip,
             current_ip=ip,
@@ -152,6 +161,21 @@ def login():
             is_active=True,
         ))
         db.session.commit()
+
+        if failed_count >= 3:
+            from app.services.otp_service import create_otp_challenge
+            create_otp_challenge(
+                session_id=new_session_id,
+                user_id=user.id,
+                resource="login",
+                delivery_target=username,
+                reason_codes=["Repeated failed login attempts"]
+            )
+            return jsonify({
+                "message": "OTP required.",
+                "require_otp": True,
+                "user": {"id": user.id, "username": user.username, "role": user.role},
+            }), 202
 
         return jsonify({
             "message": "Login successful.",

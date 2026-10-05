@@ -37,7 +37,9 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     const data = await authService.login(username, password);
     // Setting user data from login response (assumes backend sends user details)
-    setUser(data.user || { username }); 
+    if (!data.require_otp) {
+      setUser(data.user || { username }); 
+    }
     return data;
   };
 

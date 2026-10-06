@@ -26,6 +26,7 @@ from werkzeug.security import (
 
 from app.extensions import db
 from app.models import OtpChallenge, Session
+from app.utils.forensics_utils import preserve_evidence
 
 
 OTP_LENGTH = 6
@@ -130,6 +131,7 @@ def _pending_challenge(
             OtpChallenge.user_id == user_id,
             OtpChallenge.resource == resource,
             OtpChallenge.verified_at.is_(None),
+            OtpChallenge.cancelled_at.is_(None),
             OtpChallenge.expires_at > now,
             OtpChallenge.failed_attempts
             < OtpChallenge.max_attempts,
@@ -148,6 +150,7 @@ def create_otp_challenge(
     resource: str,
     delivery_target: str,
     reason_codes: list[str] = None,
+    force_new: bool = False,
 ) -> dict[str, int | str]:
     """Create or reuse a pending OTP challenge."""
 
@@ -170,18 +173,19 @@ def create_otp_challenge(
 
     now = datetime.utcnow()
 
-    existing = _pending_challenge(
-        session_id=session_id,
-        user_id=user_id,
-        resource=resource,
-        now=now,
-    )
+    if not force_new:
+        existing = _pending_challenge(
+            session_id=session_id,
+            user_id=user_id,
+            resource=resource,
+            now=now,
+        )
 
-    if existing is not None:
-        return {
-            "status": "pending",
-            "expires_in_seconds": OTP_TTL_SECONDS,
-        }
+        if existing is not None:
+            return {
+                "status": "pending",
+                "expires_in_seconds": OTP_TTL_SECONDS,
+            }
 
     otp_code = _generate_otp_code()
 
@@ -227,6 +231,15 @@ def create_otp_challenge(
         )
 
         db.session.commit()
+        
+        session_row = _validate_identity(session_id=session_id, user_id=user_id)
+        details = {
+            "event": {"event_type": "OTP_ISSUED"},
+            "session_id": session_id,
+            "user_id": user_id,
+            "resource": resource
+        }
+        preserve_evidence(session_row.login_event_id, details)
 
     except Exception:
         db.session.rollback()
@@ -251,6 +264,7 @@ def _latest_unverified_challenge(
             session_id=session_id,
             user_id=user_id,
             verified_at=None,
+            cancelled_at=None,
         )
         .order_by(
             OtpChallenge.id.desc()
@@ -416,3 +430,51 @@ def has_valid_otp_grant(
             return False
 
     return True
+
+
+def cancel_otp_challenge(
+    *,
+    session_id: str,
+    user_id: int,
+) -> bool:
+    """Cancel the most recent unverified OTP challenge explicitly."""
+    
+    _validate_identity(
+        session_id=session_id,
+        user_id=user_id,
+    )
+    
+    challenge = _latest_unverified_challenge(
+        session_id=session_id,
+        user_id=user_id,
+    )
+    
+    if challenge is None:
+        return False
+        
+    challenge.cancelled_at = datetime.utcnow()
+    db.session.commit()
+    
+    return True
+
+def count_recent_evasions(
+    *,
+    session_id: str,
+    user_id: int,
+    minutes: int = 5,
+) -> int:
+    """Count explicit OTP cancellations within the time window."""
+    
+    window_start = datetime.utcnow() - timedelta(minutes=minutes)
+    
+    count = (
+        OtpChallenge.query
+        .filter(
+            OtpChallenge.session_id == session_id,
+            OtpChallenge.user_id == user_id,
+            OtpChallenge.cancelled_at >= window_start,
+        )
+        .count()
+    )
+    
+    return count

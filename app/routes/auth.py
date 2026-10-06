@@ -4,7 +4,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 
 from app.extensions import db
 from app.models import User, LoginEvent, Session
-from app.services.otp_service import verify_otp_code
+from app.services.otp_service import verify_otp_code, cancel_otp_challenge, create_otp_challenge, _latest_unverified_challenge
 from app.utils.fingerprint import get_device_fingerprint, generate_session_id
 from app.utils.forensics_utils import preserve_evidence
 
@@ -115,9 +115,17 @@ def login():
 
     failed_count = 0
     if user:
-        last_events = LoginEvent.query.filter_by(user_id=user.id).order_by(LoginEvent.timestamp.desc()).limit(3).all()
+        last_events = LoginEvent.query.filter_by(user_id=user.id).order_by(LoginEvent.timestamp.desc()).limit(10).all()
         for e in last_events:
             if e.success:
+                if e.action_taken == "OTP Required" and e.session_id:
+                    from app.models import OtpChallenge
+                    challenge = OtpChallenge.query.filter_by(
+                        session_id=e.session_id, resource="login"
+                    ).order_by(OtpChallenge.id.desc()).first()
+                    
+                    if challenge and challenge.verified_at is None:
+                        continue
                 break
             failed_count += 1
 
@@ -131,7 +139,8 @@ def login():
     )
 
     if success:
-        login_user(user)
+        if failed_count < 3:
+            login_user(user)
 
         # Create the Session row — this is the real "start of a continuous
         # Zero Trust session," not just a login event. Everything from here
@@ -189,7 +198,6 @@ def login():
 
 
 @auth_bp.route("/otp/verify", methods=["POST"])
-@login_required
 def verify_otp():
     """Verify the active session's pending Zero Trust OTP."""
 
@@ -215,14 +223,17 @@ def verify_otp():
         "app_session_id"
     )
 
-    if not session_id:
+    session_row = Session.query.filter_by(session_id=session_id, is_active=True).first()
+    if not session_row:
         return jsonify({
             "error": "Session invalid. Please log in again.",
         }), 401
+        
+    user_id = session_row.user_id
 
     result = verify_otp_code(
         session_id=session_id,
-        user_id=current_user.id,
+        user_id=user_id,
         otp_code=otp_code,
     )
 
@@ -231,12 +242,37 @@ def verify_otp():
     ]
 
     if result["verified"] is True:
+        # If this was a login OTP, authenticate the user now.
+        from app.models import OtpChallenge
+        challenge = OtpChallenge.query.filter_by(
+            session_id=session_id, user_id=user_id
+        ).order_by(OtpChallenge.verified_at.desc()).first()
+        
+        if challenge and challenge.resource == "login" and not current_user.is_authenticated:
+            user = User.query.get(user_id)
+            if user:
+                login_user(user)
+                
+        details = {
+            "event": {"event_type": "OTP_VERIFIED"},
+            "session_id": session_id,
+            "user_id": user_id
+        }
+        preserve_evidence(session_row.login_event_id, details)
+            
         return jsonify({
             "message": "OTP verified.",
             "verified": True,
         }), 200
 
     if status == "invalid":
+        details = {
+            "event": {"event_type": "OTP_VERIFICATION_FAILED"},
+            "session_id": session_id,
+            "user_id": user_id
+        }
+        preserve_evidence(session_row.login_event_id, details)
+            
         return jsonify({
             "error": "Invalid OTP.",
             "verified": False,
@@ -259,9 +295,9 @@ def verify_otp():
                 "session_id": session_id,
                 "timestamp": session_row.ended_at.isoformat(),
                 "user": {
-                    "user_id": current_user.id,
-                    "username": current_user.username,
-                    "role": current_user.role
+                    "user_id": user_id,
+                    "username": user.username if (user := User.query.get(user_id)) else "unknown",
+                    "role": user.role if user else "unknown"
                 },
                 "policy_action": "OTP",
                 "session_outcome": "Terminated",
@@ -281,6 +317,13 @@ def verify_otp():
         }), 423
 
     if status == "expired":
+        details = {
+            "event": {"event_type": "OTP_EXPIRED"},
+            "session_id": session_id,
+            "user_id": user_id
+        }
+        preserve_evidence(session_row.login_event_id, details)
+            
         return jsonify({
             "error": "OTP challenge expired.",
             "verified": False,
@@ -290,6 +333,67 @@ def verify_otp():
     raise RuntimeError(
         f"Unsupported OTP verification status: {status}"
     )
+
+@auth_bp.route("/otp/resend", methods=["POST"])
+def resend_otp():
+    session_id = flask_session.get("app_session_id")
+    if not session_id:
+        return jsonify({"error": "Session invalid."}), 401
+        
+    session_row = Session.query.filter_by(session_id=session_id, is_active=True).first()
+    if not session_row:
+        return jsonify({"error": "Session invalid."}), 401
+        
+    user_id = session_row.user_id
+
+    challenge = _latest_unverified_challenge(session_id=session_id, user_id=user_id)
+    if challenge:
+        # Check 60-second cooldown
+        now = datetime.utcnow()
+        elapsed = (now - challenge.created_at).total_seconds()
+        if elapsed < 60:
+            return jsonify({"error": "Please wait 60 seconds before requesting another code."}), 429
+            
+        resource = challenge.resource
+        result = create_otp_challenge(
+            session_id=session_id,
+            user_id=user_id,
+            resource=resource,
+            delivery_target=User.query.get(user_id).username,
+            reason_codes=challenge.granted_reason_codes.split(",") if challenge.granted_reason_codes else [],
+            force_new=True
+        )
+        
+        return jsonify(result), 200
+        
+    return jsonify({"error": "No pending challenge found."}), 404
+
+
+@auth_bp.route("/otp/cancel", methods=["POST"])
+def cancel_otp():
+    session_id = flask_session.get("app_session_id")
+    if not session_id:
+        return jsonify({"error": "Session invalid."}), 401
+        
+    session_row = Session.query.filter_by(session_id=session_id, is_active=True).first()
+    if not session_row:
+        return jsonify({"error": "Session invalid."}), 401
+        
+    user_id = session_row.user_id
+        
+    success = cancel_otp_challenge(session_id=session_id, user_id=user_id)
+    
+    if success:
+        details = {
+            "event": {"event_type": "OTP_CANCELLED"},
+            "session_id": session_id,
+            "user_id": user_id
+        }
+        preserve_evidence(session_row.login_event_id, details)
+            
+        return jsonify({"message": "OTP challenge cancelled."}), 200
+        
+    return jsonify({"error": "No pending challenge to cancel."}), 404
 
 
 @auth_bp.route("/logout", methods=["POST"])

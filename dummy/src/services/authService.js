@@ -39,6 +39,16 @@ const authService = {
 
     return response.data;
   },
+
+  resendOtp: async () => {
+    const response = await axiosInstance.post('/auth/otp/resend');
+    return response.data;
+  },
+
+  cancelOtp: async () => {
+    const response = await axiosInstance.post('/auth/otp/cancel');
+    return response.data;
+  },
 };
 
 export default authService;

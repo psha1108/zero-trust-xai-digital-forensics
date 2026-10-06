@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import authService from '../../services/authService';
@@ -13,6 +13,9 @@ const Login = () => {
   const [requireOtp, setRequireOtp] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [tempUser, setTempUser] = useState(null);
+  
+  const [timeLeft, setTimeLeft] = useState(300);
+  const [resendCooldown, setResendCooldown] = useState(60);
 
   const navigate = useNavigate();
   const { login, setUser } = useAuth(); 
@@ -27,6 +30,26 @@ const Login = () => {
     setOtpCode(e.target.value);
     if (error) setError('');
   };
+
+  useEffect(() => {
+    let timer;
+    if (requireOtp && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [requireOtp, timeLeft]);
+
+  useEffect(() => {
+    let timer;
+    if (requireOtp && resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [requireOtp, resendCooldown]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -69,6 +92,8 @@ const Login = () => {
       if (data.require_otp) {
         setRequireOtp(true);
         setTempUser(data.user);
+        setTimeLeft(300);
+        setResendCooldown(60);
       } else {
         navigate('/dashboard', { replace: true });
       }
@@ -87,6 +112,44 @@ const Login = () => {
     }
   };
 
+  const handleResend = async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      await authService.resendOtp();
+      setTimeLeft(300);
+      setResendCooldown(60);
+      setError('A new code has been sent.');
+    } catch (err) {
+      if (err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else {
+        setError('Failed to resend code.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    try {
+      await authService.cancelOtp();
+    } catch (err) {
+      console.error("Failed to cancel OTP challenge", err);
+    }
+    setRequireOtp(false);
+    setOtpCode('');
+    setError('');
+    setTimeLeft(300);
+    setResendCooldown(60);
+  };
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
   return (
     <div className="auth-container">
       <div className="auth-card">
@@ -95,6 +158,11 @@ const Login = () => {
           <p className="auth-subtitle">
             {requireOtp ? 'Step-up Authentication' : 'Secure Gateway Access'}
           </p>
+          {requireOtp && (
+            <p style={{ marginTop: '10px', fontSize: '14px', color: '#666' }}>
+              Code expires in: {formatTime(timeLeft)}
+            </p>
+          )}
         </div>
         
         {error && <div className="auth-error" role="alert">{error}</div>}
@@ -130,13 +198,35 @@ const Login = () => {
               placeholder="Enter 6-digit OTP"
               value={otpCode}
               onChange={handleOtpChange}
+              disabled={isLoading || timeLeft === 0}
               aria-invalid={!!error}
+              autoFocus
             />
           )}
           
-          <Button type="submit" isLoading={isLoading} aria-live="polite">
-            {requireOtp ? 'Verify OTP' : 'Authenticate'}
-          </Button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            {requireOtp && (
+              <Button type="button" onClick={handleCancel} disabled={isLoading} style={{ backgroundColor: '#6c757d' }}>
+                Cancel
+              </Button>
+            )}
+            <Button type="submit" isLoading={isLoading} disabled={requireOtp && (otpCode.length !== 6 || timeLeft === 0)} aria-live="polite">
+              {requireOtp ? 'Verify OTP' : 'Authenticate'}
+            </Button>
+          </div>
+          
+          {requireOtp && (
+            <div style={{ textAlign: 'center', marginTop: '15px' }}>
+              <button 
+                type="button"
+                onClick={handleResend} 
+                disabled={isLoading || resendCooldown > 0}
+                style={{ background: 'none', border: 'none', color: '#0066cc', cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend code'}
+              </button>
+            </div>
+          )}
         </form>
 
         {!requireOtp && (

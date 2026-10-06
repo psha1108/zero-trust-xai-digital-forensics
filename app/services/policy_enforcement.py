@@ -27,6 +27,7 @@ from typing import Any, Mapping
 from app.extensions import db
 from app.models import AccessEvent, LoginEvent, Session
 from app.services.policy_engine import decide_zero_trust_policy
+from app.services.otp_service import count_recent_evasions
 
 
 def _extract_risk_state(
@@ -179,11 +180,18 @@ def apply_zero_trust_policy(
             "Session anchor LoginEvent was not found."
         )
 
+    evasion_count = count_recent_evasions(
+        session_id=session_id,
+        user_id=access_event.user_id,
+        minutes=5,
+    )
+
     policy_result = decide_zero_trust_policy(
         analysis=analysis,
         privilege_mismatch=bool(
             access_event.privilege_mismatch
         ),
+        recent_evasion_count=evasion_count,
     )
 
     action = policy_result["action"]

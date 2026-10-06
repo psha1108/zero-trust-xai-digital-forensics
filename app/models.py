@@ -212,6 +212,11 @@ class OtpChallenge(db.Model):
         nullable=True,
     )
 
+    cancelled_at = db.Column(
+        db.DateTime,
+        nullable=True,
+    )
+
     granted_reason_codes = db.Column(
         db.String(255),
         nullable=True,

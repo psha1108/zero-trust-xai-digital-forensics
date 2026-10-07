@@ -251,31 +251,106 @@ const EvidenceLogView = () => {
 
               <div className="detail-section">
                 <h3>SHAP ANALYSIS</h3>
-                <p><strong>RF Prediction:</strong> {selectedLog.details?.shap?.prediction || 'N/A'}</p>
-                <p><strong>SHAP Base Value:</strong> {selectedLog.details?.shap?.explanation?.base_value !== undefined ? selectedLog.details.shap.explanation.base_value.toFixed(4) : 'N/A'}</p>
-                {selectedLog.details?.shap?.explanation && Array.isArray(selectedLog.details.shap.explanation.contributions) && selectedLog.details.shap.explanation.contributions.length > 0 ? (
-                  <table className="shap-table" style={{width: "100%", textAlign: "left", borderCollapse: "collapse"}}>
-                    <thead>
-                      <tr style={{borderBottom: "1px solid #ddd"}}>
-                        <th style={{padding: "8px"}}>Feature Name</th>
-                        <th style={{padding: "8px"}}>Contribution Value</th>
-                        <th style={{padding: "8px"}}>Effect</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedLog.details.shap.explanation.contributions.map((c, i) => (
-                        <tr key={i} style={{borderBottom: "1px solid #eee"}}>
-                          <td style={{padding: "8px"}}>{c.feature_name}</td>
-                          <td style={{padding: "8px"}}>{c.contribution.toFixed(4)}</td>
-                          <td style={{padding: "8px", color: c.contribution > 0 ? "red" : "green"}}>
-                            {c.contribution > 0 ? "Positive (Increases Risk)" : c.contribution < 0 ? "Negative (Decreases Risk)" : "Neutral"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <p><strong>Feature contributions:</strong> Not applicable — SHAP explanation was not generated for this event.</p>
+                
+                {selectedLog.details?.shap ? (() => {
+                  const shap = selectedLog.details.shap;
+                  const prediction = shap.prediction ? shap.prediction.toUpperCase() : 'N/A';
+                  const probability = shap.model_probability ? (shap.model_probability * 100).toFixed(1) + '%' : 'N/A';
+                  const riskColor = prediction === 'HIGH' ? '#f44336' : prediction === 'MEDIUM' ? '#ff9800' : '#4caf50';
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      <div style={{ padding: '16px', backgroundColor: 'rgba(0, 0, 0, 0.03)', borderRadius: '8px', borderLeft: `4px solid ${riskColor}` }}>
+                        <p style={{ margin: '0 0 8px 0', fontSize: '1.05rem' }}>
+                          <strong>Random Forest Prediction:</strong> <span style={{ color: riskColor, fontWeight: 'bold' }}>{prediction} RISK</span>
+                        </p>
+                        <p style={{ margin: '0 0 8px 0' }}><strong>Probability:</strong> {probability}</p>
+                        <p style={{ margin: '0 0 8px 0' }}><strong>Explained Class:</strong> <span style={{ textTransform: 'capitalize' }}>{shap.prediction}</span></p>
+                        <p style={{ margin: '0 0 8px 0' }}><strong>Base Value:</strong> {shap.explanation?.base_value !== undefined ? shap.explanation.base_value.toFixed(4) : 'N/A'}</p>
+                      </div>
+
+                      <div>
+                        <h4 style={{ margin: '0 0 10px 0', fontSize: '1.1rem' }}>WHY WAS THIS PREDICTION MADE?</h4>
+                        {shap.explanation_summary && (
+                          <p style={{ fontStyle: 'italic', color: 'var(--text-secondary, #555)', marginBottom: '16px' }}>
+                            "{shap.explanation_summary}"
+                          </p>
+                        )}
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                          <div>
+                            <h5 style={{ color: '#4caf50', margin: '0 0 10px 0', borderBottom: '1px solid rgba(76, 175, 80, 0.2)', paddingBottom: '4px' }}>Main factors supporting {prediction}</h5>
+                            {shap.supporting_factors && shap.supporting_factors.length > 0 ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                {shap.supporting_factors.map((f, i) => (
+                                  <div key={i} style={{ padding: '10px', backgroundColor: 'rgba(46, 125, 50, 0.05)', border: '1px solid rgba(46, 125, 50, 0.2)', borderRadius: '6px' }}>
+                                    <div style={{ fontWeight: 'bold', color: '#333', marginBottom: '4px' }}><span style={{ color: '#4caf50', marginRight: '6px' }}>✓</span>{f.display_name}</div>
+                                    <div style={{ fontSize: '0.9rem', color: '#555', marginLeft: '20px' }}>Value: <strong>{f.source_value}</strong></div>
+                                    <div style={{ fontSize: '0.9rem', color: '#555', marginLeft: '20px' }}>SHAP Impact: <span style={{ color: '#4caf50', fontWeight: 'bold' }}>+{f.shap_value.toFixed(4)}</span></div>
+                                    <div style={{ fontSize: '0.85rem', color: '#777', fontStyle: 'italic', marginLeft: '20px', marginTop: '4px' }}>Supports the {prediction}-risk prediction.</div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : <p style={{ color: '#777', fontSize: '0.9rem' }}>No significant supporting factors.</p>}
+                          </div>
+
+                          <div>
+                            <h5 style={{ color: '#f44336', margin: '0 0 10px 0', borderBottom: '1px solid rgba(244, 67, 54, 0.2)', paddingBottom: '4px' }}>Main factors opposing {prediction}</h5>
+                            {shap.opposing_factors && shap.opposing_factors.length > 0 ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                {shap.opposing_factors.map((f, i) => (
+                                  <div key={i} style={{ padding: '10px', backgroundColor: 'rgba(198, 40, 40, 0.05)', border: '1px solid rgba(198, 40, 40, 0.2)', borderRadius: '6px' }}>
+                                    <div style={{ fontWeight: 'bold', color: '#333', marginBottom: '4px' }}><span style={{ color: '#f44336', marginRight: '6px' }}>⚠</span>{f.display_name}</div>
+                                    <div style={{ fontSize: '0.9rem', color: '#555', marginLeft: '22px' }}>Value: <strong>{f.source_value}</strong></div>
+                                    <div style={{ fontSize: '0.9rem', color: '#555', marginLeft: '22px' }}>SHAP Impact: <span style={{ color: '#f44336', fontWeight: 'bold' }}>{f.shap_value.toFixed(4)}</span></div>
+                                    <div style={{ fontSize: '0.85rem', color: '#777', fontStyle: 'italic', marginLeft: '22px', marginTop: '4px' }}>Pushes the prediction away from {prediction} risk.</div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : <p style={{ color: '#777', fontSize: '0.9rem' }}>No significant opposing factors.</p>}
+                          </div>
+                        </div>
+                      </div>
+
+                      <details style={{ marginTop: '10px', padding: '12px', backgroundColor: 'rgba(0,0,0,0.02)', border: '1px solid #e0e0e0', borderRadius: '6px' }}>
+                        <summary style={{ fontWeight: 'bold', cursor: 'pointer', color: '#555' }}>Detailed SHAP Contributions</summary>
+                        {shap.explanation && Array.isArray(shap.explanation.contributions) && shap.explanation.contributions.length > 0 ? (
+                          <div style={{ marginTop: '16px', overflowX: 'auto' }}>
+                            <table className="shap-table" style={{ width: "100%", textAlign: "left", borderCollapse: "collapse" }}>
+                              <thead>
+                                <tr style={{ borderBottom: "2px solid #ddd" }}>
+                                  <th style={{ padding: "8px", fontWeight: '600' }}>Feature Name</th>
+                                  <th style={{ padding: "8px", fontWeight: '600' }}>Contribution Value</th>
+                                  <th style={{ padding: "8px", fontWeight: '600' }}>Effect</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {shap.explanation.contributions.map((c, i) => (
+                                  <tr key={i} style={{ borderBottom: "1px solid #eee" }}>
+                                    <td style={{ padding: "8px" }}>{c.feature_name}</td>
+                                    <td style={{ padding: "8px" }}>{c.contribution.toFixed(4)}</td>
+                                    <td style={{ padding: "8px" }}>
+                                      <span style={{
+                                        color: c.contribution > 0 ? '#4caf50' : c.contribution < 0 ? '#f44336' : '#777',
+                                        fontWeight: '600',
+                                        fontSize: '0.9rem'
+                                      }}>
+                                        {c.contribution > 0 ? `Supports ${prediction}` : c.contribution < 0 ? `Opposes ${prediction}` : "Neutral"}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <p style={{ marginTop: '10px' }}>No feature contributions available.</p>
+                        )}
+                      </details>
+                    </div>
+                  );
+                })() : (
+                  <p>Not applicable — SHAP explanation was not generated for this event.</p>
                 )}
               </div>
 

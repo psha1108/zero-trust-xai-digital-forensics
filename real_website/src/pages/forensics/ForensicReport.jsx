@@ -180,33 +180,107 @@ const ForensicReport = () => {
           report.evidence_inventory.filter(ev => ev.details?.shap).map((ev, idx) => {
             const shap = ev.details.shap;
             const explanation = shap.explanation || {};
-            const contributions = explanation.contributions || [];
+            const prediction = shap.prediction ? shap.prediction.toUpperCase() : 'N/A';
+            const probability = shap.model_probability ? (shap.model_probability * 100).toFixed(1) + '%' : 'N/A';
+            const riskColor = prediction === 'HIGH' ? '#b91c1c' : prediction === 'MEDIUM' ? '#b45309' : '#15803d';
+
             return (
-              <div key={idx} className="shap-block">
+              <div key={idx} className="shap-block" style={{ marginBottom: '25px' }}>
                 <h3>XAI Analysis for Evidence {ev.evidence_id}</h3>
-                <p><strong>Base Value:</strong> {explanation.base_value !== undefined ? explanation.base_value.toFixed(4) : 'N/A'}</p>
-                <p><strong>Final Prediction Output:</strong> {shap.prediction !== undefined ? shap.prediction : 'N/A'}</p>
-                {contributions.length > 0 && (
+                
+                <div style={{ marginBottom: '15px' }}>
+                  <p><strong>Random Forest Prediction:</strong> <span style={{ color: riskColor, fontWeight: 'bold' }}>{prediction}</span></p>
+                  <p><strong>Predicted Probability:</strong> {probability}</p>
+                  <p><strong>Explained Class:</strong> <span style={{ textTransform: 'capitalize' }}>{shap.prediction}</span></p>
+                  <p><strong>SHAP Base Value:</strong> {explanation.base_value !== undefined ? explanation.base_value.toFixed(4) : 'N/A'}</p>
+                </div>
+
+                <h4 style={{ marginTop: '20px', marginBottom: '10px' }}>WHY WAS THIS PREDICTION MADE?</h4>
+                
+                <div style={{ marginBottom: '15px' }}>
+                  <strong>Overall Explanation:</strong>
+                  {shap.explanation_summary ? (
+                    <p style={{ marginTop: '5px', fontStyle: 'italic' }}>"{shap.explanation_summary}"</p>
+                  ) : (
+                    <p style={{ marginTop: '5px' }}>No overall explanation available.</p>
+                  )}
+                </div>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <strong>Top Supporting Factors:</strong>
+                  {shap.supporting_factors && shap.supporting_factors.length > 0 ? (
+                    <ol style={{ marginTop: '5px', paddingLeft: '20px' }}>
+                      {shap.supporting_factors.map((f, i) => (
+                        <li key={i} style={{ marginBottom: '8px' }}>
+                          <strong>{f.display_name}</strong>
+                          <div style={{ fontSize: '0.9rem', color: '#444' }}>Actual Value: {f.source_value}</div>
+                          <div style={{ fontSize: '0.9rem', color: '#444' }}>SHAP Impact: +{f.shap_value.toFixed(4)}</div>
+                          <div style={{ fontSize: '0.9rem', color: '#444' }}>Effect: Supports {prediction}</div>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p style={{ marginTop: '5px', fontSize: '0.9rem', color: '#666' }}>No significant supporting factors.</p>
+                  )}
+                </div>
+
+                <div style={{ marginBottom: '20px' }}>
+                  <strong>Top Opposing Factors:</strong>
+                  {shap.opposing_factors && shap.opposing_factors.length > 0 ? (
+                    <ol style={{ marginTop: '5px', paddingLeft: '20px' }}>
+                      {shap.opposing_factors.map((f, i) => (
+                        <li key={i} style={{ marginBottom: '8px' }}>
+                          <strong>{f.display_name}</strong>
+                          <div style={{ fontSize: '0.9rem', color: '#444' }}>Actual Value: {f.source_value}</div>
+                          <div style={{ fontSize: '0.9rem', color: '#444' }}>SHAP Impact: {f.shap_value.toFixed(4)}</div>
+                          <div style={{ fontSize: '0.9rem', color: '#444' }}>Effect: Opposes {prediction}</div>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p style={{ marginTop: '5px', fontSize: '0.9rem', color: '#666' }}>No significant opposing factors.</p>
+                  )}
+                </div>
+
+                <h4 style={{ marginTop: '20px', marginBottom: '10px' }}>Detailed SHAP Contributions</h4>
+                {explanation.contributions && explanation.contributions.length > 0 ? (
                   <table className="evidence-table">
                     <thead>
                       <tr>
                         <th>Feature</th>
+                        <th>Actual Value</th>
                         <th>Contribution Value</th>
-                        <th>Impact Direction</th>
+                        <th>Effect</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {contributions.sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution)).map((c, cIdx) => (
-                        <tr key={cIdx}>
-                          <td>{c.feature_name}</td>
-                          <td className="hash-text">{c.contribution.toFixed(6)}</td>
-                          <td style={{ color: c.contribution > 0 ? '#b91c1c' : '#15803d', fontWeight: 'bold' }}>
-                            {c.contribution > 0 ? 'Positive (Increased Risk)' : 'Negative (Decreased Risk)'}
-                          </td>
-                        </tr>
-                      ))}
+                      {explanation.contributions.map((c, cIdx) => {
+                        // Find matching factor to show actual value, otherwise show N/A
+                        let actualValue = 'N/A';
+                        if (shap.supporting_factors) {
+                          const supp = shap.supporting_factors.find(f => f.feature_name === c.feature_name);
+                          if (supp) actualValue = supp.source_value;
+                        }
+                        if (actualValue === 'N/A' && shap.opposing_factors) {
+                          const opp = shap.opposing_factors.find(f => f.feature_name === c.feature_name);
+                          if (opp) actualValue = opp.source_value;
+                        }
+
+                        return (
+                          <tr key={cIdx}>
+                            <td>{c.feature_name}</td>
+                            <td>{actualValue}</td>
+                            <td className="hash-text">{c.contribution.toFixed(6)}</td>
+                            <td style={{ color: c.contribution > 0 ? '#15803d' : c.contribution < 0 ? '#b91c1c' : '#444', fontWeight: 'bold' }}>
+                              {c.contribution > 0 ? `Supports ${prediction}` : c.contribution < 0 ? `Opposes ${prediction}` : 'Neutral'}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
+                ) : (
+                  <p>No feature contributions available.</p>
                 )}
               </div>
             );

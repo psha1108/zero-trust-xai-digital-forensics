@@ -186,6 +186,26 @@ def apply_zero_trust_policy(
         minutes=5,
     )
 
+    events = (
+        AccessEvent.query.filter_by(session_id=session_id)
+        .order_by(AccessEvent.timestamp.asc())
+        .all()
+    )
+
+    rapid_switch_count = 0
+    for i in range(1, len(events)):
+        prev = events[i - 1]
+        curr = events[i]
+
+        if curr.resource == prev.resource:
+            continue
+
+        delta = (curr.timestamp - prev.timestamp).total_seconds()
+        if delta <= 2.0:
+            rapid_switch_count += 1
+        else:
+            rapid_switch_count = 0
+
     policy_result = decide_zero_trust_policy(
         analysis=analysis,
         privilege_mismatch=bool(
@@ -193,6 +213,7 @@ def apply_zero_trust_policy(
         ),
         recent_evasion_count=evasion_count,
         is_protected_resource=(access_event.resource in {"normal_page", "hr_page", "finance_page", "it_support", "management_reports"}),
+        rapid_switch_count=rapid_switch_count,
     )
 
     action = policy_result["action"]

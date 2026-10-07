@@ -134,6 +134,7 @@ def decide_zero_trust_policy(
     privilege_mismatch: bool,
     recent_evasion_count: int = 0,
     is_protected_resource: bool = False,
+    rapid_switch_count: int = 0,
 ) -> dict[str, Any]:
     """Return the deterministic Zero Trust decision for one access event.
 
@@ -154,7 +155,8 @@ def decide_zero_trust_policy(
 
     Block
         Terminate the session. Requires corroborated evidence:
-        RF high risk AND Isolation Forest anomaly.
+        RF high risk AND Isolation Forest anomaly. Or triggered by
+        a deterministic policy rule such as rapid resource switching.
 
     K-Means never independently produces Restrict or Block.
     """
@@ -176,6 +178,15 @@ def decide_zero_trust_policy(
     )
 
     reason_codes: list[str] = []
+
+    # Absolute highest precedence: deterministic rapid resource switching block
+    if rapid_switch_count >= 10:
+        reason_codes.append("rapid_resource_switching")
+        return {
+            "action": "Block",
+            "terminate_session": True,
+            "reason_codes": reason_codes,
+        }
 
     # Highest precedence: terminate only when two independent
     # operational models corroborate severe behavior.

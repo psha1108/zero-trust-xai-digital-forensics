@@ -4,16 +4,54 @@ import "../dashboard/Dashboard.css";
 
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return 'N/A';
-
-  const normalized = timestamp.endsWith('Z')
-    ? timestamp
-    : `${timestamp}Z`;
-
+  const normalized = timestamp.endsWith('Z') ? timestamp : `${timestamp}Z`;
   const date = new Date(normalized);
-
   if (Number.isNaN(date.getTime())) return timestamp;
-
   return date.toLocaleString();
+};
+
+const FactorCard = ({ factor, type }) => {
+  const isSupporting = type === 'supporting';
+  const bgColor = isSupporting ? 'rgba(46, 125, 50, 0.1)' : 'rgba(198, 40, 40, 0.1)';
+  const borderColor = isSupporting ? 'rgba(46, 125, 50, 0.3)' : 'rgba(198, 40, 40, 0.3)';
+  const textColor = isSupporting ? '#4caf50' : '#f44336';
+  const icon = isSupporting ? '✓' : '⚠';
+
+  return (
+    <div style={{
+      backgroundColor: bgColor,
+      border: `1px solid ${borderColor}`,
+      borderRadius: '8px',
+      padding: '12px 16px',
+      marginBottom: '12px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <strong style={{ fontSize: '1rem', color: '#fff' }}>
+          <span style={{ color: textColor, marginRight: '8px' }}>{icon}</span>
+          {factor.display_name}
+        </strong>
+        <span style={{ 
+          backgroundColor: borderColor, 
+          color: textColor, 
+          padding: '2px 8px', 
+          borderRadius: '12px', 
+          fontSize: '0.85rem',
+          fontWeight: 'bold'
+        }}>
+          {factor.shap_value > 0 ? '+' : ''}{factor.shap_value.toFixed(4)}
+        </span>
+      </div>
+      <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary, #aaa)' }}>
+        Value: <strong style={{ color: '#fff' }}>{factor.source_value}</strong>
+      </div>
+      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #aaa)', fontStyle: 'italic' }}>
+        {isSupporting ? 'Supports the prediction' : 'Pushes away from the prediction'}
+      </div>
+    </div>
+  );
 };
 
 const SocShap = () => {
@@ -31,106 +69,173 @@ const SocShap = () => {
     .sort((a, b) => b.evidence_id - a.evidence_id);
 
   return (
-    <div className="dashboard-container" style={{ height: "auto", minHeight: "100%" }}>
-      <h1>SHAP / XAI Explanations</h1>
-      {shapData.length === 0 ? <p>No SHAP explanations available.</p> : (
-        <div style={{display:"flex", flexDirection:"column", gap:"20px"}}>
-          {shapData.map(e => (
-            <div key={e.evidence_id} className="dashboard-card">
-              <h3>Event ID: {e.details?.event?.event_id || e.evidence_id} | Type: {e.details?.event?.event_type || e.details?.event_type || e.event_type || "Unknown"}</h3>
-              <p><strong>Timestamp:</strong> {formatTimestamp(e.timestamp)}</p>
-              <p><strong>User:</strong> {e.user}</p>
-              <p><strong>Resource:</strong> {e.resource}</p>
-              
-              <hr style={{ margin: "15px 0", borderTop: "1px solid #ddd" }} />
-              <h4>WHY WAS THIS PREDICTION MADE?</h4>
-              
-              <div style={{ marginBottom: "15px", padding: "15px", backgroundColor: "#f9f9f9", borderRadius: "5px", borderLeft: "4px solid #0056b3" }}>
-                <p><strong>Random Forest Prediction:</strong> <span style={{ textTransform: "uppercase", fontWeight: "bold" }}>{e.details.shap.prediction}</span></p>
-                {e.details.shap.model_probability && <p><strong>Probability:</strong> {(e.details.shap.model_probability * 100).toFixed(1)}%</p>}
+    <div className="dashboard-container" style={{ height: "auto", minHeight: "100%", paddingBottom: "2rem" }}>
+      <h1 className="page-title">SHAP / XAI Explanations</h1>
+      {shapData.length === 0 ? (
+        <p style={{ color: 'var(--text-secondary, #aaa)' }}>No SHAP explanations available.</p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
+          {shapData.map((e) => {
+            const shap = e.details.shap;
+            const prediction = shap.prediction.toUpperCase();
+            const probability = shap.model_probability ? (shap.model_probability * 100).toFixed(1) + '%' : 'N/A';
+            const riskColor = prediction === 'HIGH' ? '#f44336' : prediction === 'MEDIUM' ? '#ff9800' : '#4caf50';
+
+            return (
+              <div key={e.evidence_id} className="dashboard-card" style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "24px" }}>
                 
-                {e.details.shap.explanation_summary && (
-                  <p style={{ marginTop: "10px", fontStyle: "italic", color: "#444" }}>
-                    "{e.details.shap.explanation_summary}"
-                  </p>
-                )}
-                
-                <p style={{ marginTop: "10px", fontSize: "13px", color: "#666" }}>
-                  <em>Note: SHAP explains the Random Forest risk prediction. The final Zero Trust action may also depend on anomaly detection, authorization rules, privilege mismatch, and other security context.</em>
-                </p>
+                {/* Header Information */}
+                <div>
+                  <h3 style={{ margin: "0 0 8px 0", fontSize: "1.2rem", color: '#fff' }}>
+                    Event ID: {e.details?.event?.event_id || e.evidence_id} | Type: {e.details?.event?.event_type || e.details?.event_type || e.event_type || "Unknown"}
+                  </h3>
+                  <div style={{ display: "flex", gap: "20px", color: 'var(--text-secondary, #aaa)', fontSize: '0.95rem' }}>
+                    <span><strong>Time:</strong> {formatTimestamp(e.timestamp)}</span>
+                    <span><strong>User:</strong> {e.user}</span>
+                    <span><strong>Resource:</strong> {e.resource}</span>
+                  </div>
+                </div>
+
+                {/* Summary Card */}
+                <div style={{
+                  backgroundColor: 'rgba(0, 255, 204, 0.05)',
+                  border: '1px solid rgba(0, 255, 204, 0.2)',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: '1.1rem', color: '#fff' }}>
+                      Prediction: <strong style={{ color: riskColor, letterSpacing: '1px' }}>{prediction} RISK</strong>
+                    </div>
+                    {shap.model_probability && (
+                      <div style={{ fontSize: '1.1rem', color: '#fff' }}>
+                        Probability: <strong>{probability}</strong>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {shap.explanation_summary && (
+                    <div style={{ fontSize: '1.05rem', color: '#fff', lineHeight: '1.5' }}>
+                      {shap.explanation_summary}
+                    </div>
+                  )}
+                  
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #888)', marginTop: '8px' }}>
+                    <em>Note: SHAP explains the Random Forest risk prediction. The final Zero Trust action may also depend on anomaly detection, authorization rules, privilege mismatch, and other security context.</em>
+                  </div>
+                </div>
+
+                {/* Factors Grid */}
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', 
+                  gap: '24px' 
+                }}>
+                  {/* Supporting Factors */}
+                  <div>
+                    <h4 style={{ color: '#4caf50', marginBottom: '16px', fontSize: '1.1rem', borderBottom: '1px solid rgba(76, 175, 80, 0.2)', paddingBottom: '8px' }}>
+                      Main Factors Supporting {prediction}
+                    </h4>
+                    {shap.supporting_factors && shap.supporting_factors.length > 0 ? (
+                      shap.supporting_factors.map((f, i) => (
+                        <FactorCard key={`supp-${i}`} factor={f} type="supporting" />
+                      ))
+                    ) : (
+                      <p style={{ color: 'var(--text-secondary, #aaa)', fontSize: '0.9rem' }}>No significant supporting factors.</p>
+                    )}
+                  </div>
+
+                  {/* Opposing Factors */}
+                  <div>
+                    <h4 style={{ color: '#f44336', marginBottom: '16px', fontSize: '1.1rem', borderBottom: '1px solid rgba(244, 67, 54, 0.2)', paddingBottom: '8px' }}>
+                      Main Factors Opposing {prediction}
+                    </h4>
+                    {shap.opposing_factors && shap.opposing_factors.length > 0 ? (
+                      shap.opposing_factors.map((f, i) => (
+                        <FactorCard key={`opp-${i}`} factor={f} type="opposing" />
+                      ))
+                    ) : (
+                      <p style={{ color: 'var(--text-secondary, #aaa)', fontSize: '0.9rem' }}>No significant opposing factors.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Collapsible Detailed Table */}
+                <details style={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  marginTop: '12px'
+                }}>
+                  <summary style={{ 
+                    cursor: 'pointer', 
+                    color: 'var(--text-secondary, #aaa)',
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    outline: 'none',
+                    userSelect: 'none'
+                  }}>
+                    View Detailed SHAP Contributions
+                  </summary>
+                  
+                  <div style={{ marginTop: '20px' }}>
+                    <div style={{ display: 'flex', gap: '20px', marginBottom: '16px', color: '#fff', fontSize: '0.95rem' }}>
+                      <span><strong>Explained Class:</strong> {prediction}</span>
+                      <span><strong>Base Value:</strong> {shap.explanation.base_value !== undefined ? shap.explanation.base_value.toFixed(4) : "N/A"}</span>
+                    </div>
+
+                    {shap.explanation.contributions.length > 0 ? (
+                      <div style={{ overflowX: 'auto' }}>
+                        <table className="data-table">
+                          <thead>
+                            <tr>
+                              <th>Feature Name</th>
+                              <th>Contribution Value</th>
+                              <th>Effect</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {shap.explanation.contributions.map((c, i) => {
+                              const effectColor = c.contribution > 0 ? '#4caf50' : c.contribution < 0 ? '#f44336' : 'var(--text-secondary, #aaa)';
+                              return (
+                                <tr key={i}>
+                                  <td style={{ color: '#fff' }}>{c.feature_name}</td>
+                                  <td style={{ color: '#fff' }}>{c.contribution.toFixed(4)}</td>
+                                  <td>
+                                    <span style={{
+                                      backgroundColor: c.contribution > 0 ? 'rgba(76, 175, 80, 0.1)' : c.contribution < 0 ? 'rgba(244, 67, 54, 0.1)' : 'rgba(255, 255, 255, 0.1)',
+                                      color: effectColor,
+                                      padding: '4px 10px',
+                                      borderRadius: '12px',
+                                      fontSize: '0.85rem',
+                                      fontWeight: '600'
+                                    }}>
+                                      {c.contribution > 0 ? `Supports ${prediction}` : c.contribution < 0 ? `Opposes ${prediction}` : "Neutral"}
+                                    </span>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p style={{ color: 'var(--text-secondary, #aaa)' }}>No feature contributions available.</p>
+                    )}
+                  </div>
+                </details>
+
               </div>
-
-              {e.details.shap.supporting_factors && e.details.shap.supporting_factors.length > 0 && (
-                <div style={{ marginBottom: "15px" }}>
-                  <h5 style={{ color: "#2E7D32", margin: "10px 0 5px 0" }}>Main factors supporting {e.details.shap.prediction.toUpperCase()}:</h5>
-                  <ul style={{ listStyleType: "none", paddingLeft: "0" }}>
-                    {e.details.shap.supporting_factors.map((f, i) => (
-                      <li key={i} style={{ marginBottom: "10px", padding: "10px", border: "1px solid #e0e0e0", borderRadius: "4px", backgroundColor: "#f4fff4" }}>
-                        <strong style={{ fontSize: "15px" }}>✓ {f.display_name}</strong>
-                        <div style={{ marginLeft: "20px", fontSize: "14px", marginTop: "5px" }}>
-                          <div>Value: <strong>{f.source_value}</strong></div>
-                          <div>Impact: <span style={{ color: "#2E7D32", fontWeight: "bold" }}>+{f.shap_value.toFixed(4)}</span></div>
-                          <div style={{ color: "#555", fontSize: "13px", marginTop: "4px" }}>Supports the {e.details.shap.prediction}-risk prediction.</div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {e.details.shap.opposing_factors && e.details.shap.opposing_factors.length > 0 && (
-                <div style={{ marginBottom: "20px" }}>
-                  <h5 style={{ color: "#C62828", margin: "10px 0 5px 0" }}>Main factors opposing {e.details.shap.prediction.toUpperCase()}:</h5>
-                  <ul style={{ listStyleType: "none", paddingLeft: "0" }}>
-                    {e.details.shap.opposing_factors.map((f, i) => (
-                      <li key={i} style={{ marginBottom: "10px", padding: "10px", border: "1px solid #e0e0e0", borderRadius: "4px", backgroundColor: "#fff4f4" }}>
-                        <strong style={{ fontSize: "15px" }}>⚠ {f.display_name}</strong>
-                        <div style={{ marginLeft: "22px", fontSize: "14px", marginTop: "5px" }}>
-                          <div>Value: <strong>{f.source_value}</strong></div>
-                          <div>Impact: <span style={{ color: "#C62828", fontWeight: "bold" }}>{f.shap_value.toFixed(4)}</span></div>
-                          <div style={{ color: "#555", fontSize: "13px", marginTop: "4px" }}>Pushes the prediction away from {e.details.shap.prediction} risk.</div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              <hr style={{ margin: "20px 0", borderTop: "1px dashed #ccc" }} />
-              <h4>Detailed SHAP Contributions</h4>
-              <p><strong>Explained Class:</strong> <span style={{ textTransform: "capitalize" }}>{e.details.shap.prediction}</span></p>
-              <p><strong>SHAP Base Value:</strong> {e.details.shap.explanation.base_value !== undefined ? e.details.shap.explanation.base_value.toFixed(4) : "N/A"}</p>
-              
-              <h4>SHAP Contributions</h4>
-              {e.details.shap.explanation.contributions.length > 0 ? (
-                <table className="shap-table" style={{width: "100%", textAlign: "left", borderCollapse: "collapse"}}>
-                  <thead>
-                    <tr style={{borderBottom: "1px solid #ddd"}}>
-                      <th style={{padding: "8px"}}>Feature Name</th>
-                      <th style={{padding: "8px"}}>Contribution Value</th>
-                      <th style={{padding: "8px"}}>Effect</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {e.details.shap.explanation.contributions.map((c, i) => (
-                      <tr key={i} style={{borderBottom: "1px solid #eee"}}>
-                        <td style={{padding: "8px"}}>{c.feature_name}</td>
-                        <td style={{padding: "8px"}}>{c.contribution.toFixed(4)}</td>
-                        <td style={{padding: "8px", color: c.contribution > 0 ? "#2E7D32" : "#C62828", fontWeight: "500"}}>
-                          {c.contribution > 0 ? `Supports ${e.details.shap.prediction}` : c.contribution < 0 ? `Opposes ${e.details.shap.prediction}` : "Neutral"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p>No feature contributions.</p>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
   );
 };
+
 export default SocShap;

@@ -192,6 +192,7 @@ def apply_zero_trust_policy(
             access_event.privilege_mismatch
         ),
         recent_evasion_count=evasion_count,
+        is_protected_resource=(access_event.resource in {"normal_page", "hr_page", "finance_page", "it_support", "management_reports"}),
     )
 
     action = policy_result["action"]

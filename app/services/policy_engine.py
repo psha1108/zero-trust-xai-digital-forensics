@@ -133,6 +133,7 @@ def decide_zero_trust_policy(
     analysis: Mapping[str, Any],
     privilege_mismatch: bool,
     recent_evasion_count: int = 0,
+    is_protected_resource: bool = False,
 ) -> dict[str, Any]:
     """Return the deterministic Zero Trust decision for one access event.
 
@@ -257,6 +258,31 @@ def decide_zero_trust_policy(
                 "elevated_behavior"
             )
 
+        # Escalation: Repeated OTP evasion elevates the risk.
+        if recent_evasion_count >= 3:
+            reason_codes.append("otp_evasion_detected")
+            return {
+                "action": "Block",
+                "terminate_session": True,
+                "reason_codes": reason_codes,
+            }
+        elif recent_evasion_count >= 2:
+            reason_codes.append("otp_evasion_detected")
+            return {
+                "action": "Restrict",
+                "terminate_session": False,
+                "reason_codes": reason_codes,
+            }
+
+        return {
+            "action": "OTP",
+            "terminate_session": False,
+            "reason_codes": reason_codes,
+        }
+
+    if is_protected_resource:
+        reason_codes.append("protected_resource_authorization")
+        
         # Escalation: Repeated OTP evasion elevates the risk.
         if recent_evasion_count >= 3:
             reason_codes.append("otp_evasion_detected")

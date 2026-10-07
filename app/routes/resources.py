@@ -52,37 +52,23 @@ RESOURCE_ALLOWED_ROLES = {
     "normal_page": {
         "admin",
         "employee",
-        "finance_user",
-        "guest",
-        "hr_user",
     },
     "hr_page": {
         "admin",
-        "employee",
-        "finance_user",
-        "guest",
         "hr_user",
     },
     "finance_page": {
         "admin",
-        "employee",
         "finance_user",
-        "guest",
-        "hr_user",
     },
     "admin_page": {
         "admin",
     },
     "management_reports": {
         "admin",
-        "finance_user",
     },
     "it_support": {
         "admin",
-        "employee",
-        "finance_user",
-        "guest",
-        "hr_user",
     },
     "tasks_page": {
         "admin",

@@ -232,6 +232,13 @@ def security_alerts():
                 "OTP verification required by Zero Trust policy."
             )
 
+        elif decision == "Allow":
+            severity = "low"
+            alert_type = "ACCESS_GRANTED"
+            message = (
+                "Access granted by Zero Trust policy."
+            )
+
         else:
             continue
 
@@ -619,6 +626,13 @@ def soc_security_alerts():
             alert_type = "OTP_REQUIRED"
             message = (
                 "Step-up OTP verification required."
+            )
+
+        elif decision == "Allow":
+            severity = "low"
+            alert_type = "ACCESS_GRANTED"
+            message = (
+                "Access granted by Zero Trust policy."
             )
 
         else:

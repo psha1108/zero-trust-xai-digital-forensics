@@ -154,18 +154,22 @@ def test_analysis_uses_exact_same_record_for_rf_and_shap(
             "cluster_id": 1,
             "archetype_name": "Routine Behavioral Activity",
         },
-        "explanation": {
             "explanation": {
-                "model": "operational_random_forest",
+                "explanation": {
+                    "model": "operational_random_forest",
+                },
+                "prediction": "high",
+                "class_index": 0,
+                "class_order": ["high", "low", "medium"],
+                "model_probability": 0.85,
+                "additivity": {
+                    "passed": True,
+                },
+                "supporting_factors": [],
+                "opposing_factors": [],
+                "explained_class": "high",
+                "explanation_summary": "Overall, the Random Forest classified this activity as High risk because the combined feature contributions supporting the High class outweighed the contributions pushing the prediction away from High.",
             },
-            "prediction": "high",
-            "class_index": 0,
-            "class_order": ["high", "low", "medium"],
-            "model_probability": 0.85,
-            "additivity": {
-                "passed": True,
-            },
-        },
     }
 
 

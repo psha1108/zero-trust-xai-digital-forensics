@@ -372,6 +372,71 @@ def analyze_operational_access(
             "ShapExplanation or dictionary."
         )
 
+    # -----------------------------------------------------
+    # Build deterministic UI presentation fields
+    # -----------------------------------------------------
+    feature_display_names = {
+        "role": "User role",
+        "login_hour": "Login hour",
+        "is_working_hour": "Working-hour activity",
+        "failed_attempt_count": "Failed login attempts",
+        "is_new_ip": "New IP address",
+        "is_new_device": "New device",
+        "is_unusual_time": "Unusual login time",
+        "session_duration_minutes": "Session duration",
+        "resource_sensitivity_score": "Resource sensitivity",
+        "access_count_5min": "Accesses in last 5 minutes",
+        "unauthorized_access_attempt": "Unauthorized access attempt",
+        "ip_changed_during_session": "IP changed during session",
+        "device_changed_during_session": "Device changed during session",
+        "sensitive_resource_access_count": "Sensitive-resource accesses"
+    }
+
+    explained_class = explanation["prediction"]
+    cap_class = str(explained_class).capitalize()
+    
+    supporting = []
+    opposing = []
+    
+    contributions = explanation.get("explanation", {}).get("contributions", [])
+    for c in contributions:
+        fname = c["feature_name"]
+        val = c["contribution"]
+        
+        # Get source value
+        source_val = features.get(fname, "N/A")
+        if isinstance(source_val, bool):
+            source_val = "Yes" if source_val else "No"
+        elif fname in ("is_new_ip", "is_new_device", "is_unusual_time", "is_working_hour", "unauthorized_access_attempt", "ip_changed_during_session", "device_changed_during_session"):
+            if source_val == 1 or source_val == 1.0: source_val = "Yes"
+            if source_val == 0 or source_val == 0.0: source_val = "No"
+            
+        factor = {
+            "source_feature": fname,
+            "display_name": feature_display_names.get(fname, fname),
+            "source_value": source_val,
+            "shap_value": val,
+            "direction": "toward_explained_class" if val > 0 else "away_from_explained_class" if val < 0 else "neutral"
+        }
+        
+        if val > 0:
+            supporting.append(factor)
+        elif val < 0:
+            opposing.append(factor)
+            
+    supporting.sort(key=lambda x: x["shap_value"], reverse=True)
+    opposing.sort(key=lambda x: abs(x["shap_value"]), reverse=True)
+    
+    explanation["supporting_factors"] = supporting[:3]
+    explanation["opposing_factors"] = opposing[:3]
+    explanation["explained_class"] = explained_class
+    
+    explanation["explanation_summary"] = (
+        f"Overall, the Random Forest classified this activity as {cap_class} risk "
+        f"because the combined feature contributions supporting the {cap_class} class "
+        f"outweighed the contributions pushing the prediction away from {cap_class}."
+    )
+
     behavioral_cluster = (
         _validate_behavioral_cluster(
             cluster_operational_record(

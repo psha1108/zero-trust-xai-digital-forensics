@@ -59,7 +59,12 @@ def get_evidence():
             user = user_info.get("username", "unknown")
 
             resource_info = details_json.get("resource", {})
-            resource = resource_info.get("name")
+            if isinstance(resource_info, str):
+                resource = resource_info
+            elif isinstance(resource_info, dict):
+                resource = resource_info.get("name")
+            else:
+                resource = None
 
             # Existing ML information
             ml_info = details_json.get("ml", {}).get("random_forest", {})
@@ -655,8 +660,8 @@ def get_report(session_id):
     ])
 
     # "decision" represents actual AccessEvent.decision
-    # (Blocked/Denied/Allow)
-    blocked_accesses = len([
+    # (Blocked/Denied/Allow/Restrict/OTP)
+    blocked_actions = len([
         e
         for e in events
         if e["event_type"] == "AccessEvent"
@@ -667,6 +672,29 @@ def get_report(session_id):
             "blocked",
             "deny",
             "denied"
+        )
+    ])
+
+    restrict_actions = len([
+        e
+        for e in events
+        if e["event_type"] == "AccessEvent"
+        and e.get("result")
+        and e.get("result").lower()
+        in (
+            "restrict",
+            "restricted"
+        )
+    ])
+
+    otp_actions = len([
+        e
+        for e in events
+        if e["event_type"] == "AccessEvent"
+        and e.get("result")
+        and e.get("result").lower()
+        in (
+            "otp",
         )
     ])
 
@@ -723,7 +751,9 @@ def get_report(session_id):
 
         "investigation_findings": {
             "total_access_events": total_accesses,
-            "blocked_access_events": blocked_accesses,
+            "blocked_actions": blocked_actions,
+            "restrict_actions": restrict_actions,
+            "otp_actions": otp_actions,
             "privilege_mismatches": privilege_mismatches,
             "session_terminations": session_terminations
         }

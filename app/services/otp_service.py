@@ -16,7 +16,10 @@ Security properties:
 
 from __future__ import annotations
 
+import os
+import smtplib
 import secrets
+from email.message import EmailMessage
 from datetime import datetime, timedelta
 
 from werkzeug.security import (
@@ -57,6 +60,40 @@ def _deliver_otp_code(
     print(
         f"[ZERO TRUST OTP] target={target} code={code}"
     )
+
+    mail_server = os.environ.get("MAIL_SERVER")
+    mail_port = os.environ.get("MAIL_PORT")
+    mail_username = os.environ.get("MAIL_USERNAME")
+    mail_password = os.environ.get("MAIL_PASSWORD")
+    mail_use_tls = os.environ.get("MAIL_USE_TLS", "True").lower() in ("true", "1", "yes")
+
+    if mail_server and mail_username:
+        try:
+            msg = EmailMessage()
+            msg.set_content(
+                f"Your OTP is: {code}\n\n"
+                f"This OTP is valid for 5 minutes.\n\n"
+                f"If you did not request this OTP, please ignore this email."
+            )
+            msg["Subject"] = "Your Zero Trust Security OTP"
+            msg["From"] = mail_username
+            msg["To"] = target
+
+            server = smtplib.SMTP(mail_server, int(mail_port or 587))
+            if mail_use_tls:
+                server.starttls()
+            
+            if mail_password:
+                server.login(mail_username, mail_password)
+                
+            server.send_message(msg)
+            server.quit()
+            print(f"[ZERO TRUST OTP] Email sent successfully to {target}")
+            
+        except Exception as e:
+            # We catch and print the exception so that we do not crash the Flask server
+            # or break the OTP flow for the user if SMTP fails.
+            print(f"[ZERO TRUST OTP] Email delivery failed: {e}")
 
 
 def _validate_identity(

@@ -269,8 +269,10 @@ const ForensicReport = () => {
         <div className="meta-info">
           <ul>
             <li><strong>Total Authenticated Activity:</strong> {report.investigation_findings.total_access_events} events evaluated.</li>
-            <li><strong>Privilege Compliance:</strong> {report.investigation_findings.privilege_mismatches} mismatch(es) detected requiring Restrict enforcement.</li>
-            <li><strong>Critical Violations:</strong> {report.investigation_findings.blocked_access_events} Block action(s) issued.</li>
+            <li><strong>Privilege Mismatch Events:</strong> {report.investigation_findings.privilege_mismatches} mismatch(es) detected.</li>
+            <li><strong>Restrict Actions:</strong> {report.investigation_findings.restrict_actions} Restrict action(s) issued.</li>
+            <li><strong>OTP Actions:</strong> {report.investigation_findings.otp_actions} OTP action(s) issued.</li>
+            <li><strong>Block Actions:</strong> {report.investigation_findings.blocked_actions} Block action(s) issued.</li>
           </ul>
         </div>
 
@@ -291,7 +293,7 @@ const ForensicReport = () => {
 
         <h2>12. FORMAL CONCLUSION</h2>
         <div className="meta-info">
-          <p>Based strictly on the cryptographically preserved evidence, this session demonstrates documented interaction with the organization's Zero Trust boundary. All risk assessments, SHAP explanations, and resulting enforcement actions (Allow, OTP, Restrict, Block) were executed deterministically in accordance with the established security posture.</p>
+          <p>Based strictly on the cryptographically preserved evidence, this session demonstrates documented interaction with the organization's Zero Trust boundary. Application-generated telemetry was recorded, ML assessments evaluated, and Zero Trust policies enforced. Restrict actions ({report.investigation_findings.restrict_actions}) occurred where policy conditions required them. {report.investigation_findings.blocked_actions === 0 ? 'No Block actions occurred.' : `${report.investigation_findings.blocked_actions} Block action(s) occurred.`} Cryptographic hash-chain verification was successfully performed.</p>
         </div>
 
         <h2>13. DISPOSITION</h2>

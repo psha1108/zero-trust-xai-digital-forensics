@@ -159,9 +159,14 @@ const Login = () => {
             {requireOtp ? 'Step-up Authentication' : 'Secure Gateway Access'}
           </p>
           {requireOtp && (
-            <p style={{ marginTop: '10px', fontSize: '14px', color: '#666' }}>
-              Code expires in: {formatTime(timeLeft)}
-            </p>
+            <div style={{ marginTop: '10px' }}>
+              <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+                Code expires in: {formatTime(timeLeft)}
+              </p>
+              <p style={{ fontSize: '13px', color: '#0066cc', fontWeight: '500' }}>
+                OTP sent to your registered email.
+              </p>
+            </div>
           )}
         </div>
         

@@ -138,7 +138,12 @@ const OtpVerificationModal = () => {
 
         <p>Please verify your identity to continue.</p>
         
-        <p className="otp-timer">Code expires in: {formatTime(timeLeft)}</p>
+        <div style={{ marginBottom: '15px' }}>
+          <p className="otp-timer" style={{ marginBottom: '5px' }}>Code expires in: {formatTime(timeLeft)}</p>
+          <p style={{ fontSize: '13px', color: '#0066cc', fontWeight: '500', margin: 0, textAlign: 'center' }}>
+            OTP sent to your registered email.
+          </p>
+        </div>
 
         {error && (
           <div className="otp-error">

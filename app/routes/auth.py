@@ -177,7 +177,7 @@ def login():
                 session_id=new_session_id,
                 user_id=user.id,
                 resource="login",
-                delivery_target=username,
+                delivery_target=user.email,
                 reason_codes=["Repeated failed login attempts"]
             )
             return jsonify({
@@ -359,7 +359,7 @@ def resend_otp():
             session_id=session_id,
             user_id=user_id,
             resource=resource,
-            delivery_target=User.query.get(user_id).username,
+            delivery_target=User.query.get(user_id).email,
             reason_codes=challenge.granted_reason_codes.split(",") if challenge.granted_reason_codes else [],
             force_new=True
         )

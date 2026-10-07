@@ -324,4 +324,4 @@ def test_ml_compatibility_present_fields(client, admin_user, app):
     rep_res = client.get(f"/api/forensics/report/{sid}")
     rep_data = rep_res.get_json()
     assert rep_data["investigation_findings"]["total_access_events"] == 1
-    assert rep_data["investigation_findings"]["blocked_access_events"] == 1
+    assert rep_data["investigation_findings"]["blocked_actions"] == 1

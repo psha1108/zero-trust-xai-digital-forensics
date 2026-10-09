@@ -248,7 +248,7 @@ def verify_otp():
             session_id=session_id, user_id=user_id
         ).order_by(OtpChallenge.verified_at.desc()).first()
         
-        if challenge and challenge.resource == "login" and not current_user.is_authenticated:
+        if challenge and challenge.resource == "login":
             user = User.query.get(user_id)
             if user:
                 login_user(user)

@@ -4,6 +4,21 @@ import forensicsService from '../../services/forensicsService';
 import { formatDateIST } from '../../utils/dateUtils';
 import './Forensics.css';
 
+function getPolicyRisk(action) {
+    switch (action) {
+        case 'Allow':
+        case 'Access':
+            return 'Low';
+        case 'OTP':
+        case 'Restrict':
+            return 'Medium';
+        case 'Block':
+            return 'High';
+        default:
+            return 'Unknown';
+    }
+}
+
 const EvidenceLogView = () => {
   const [evidence, setEvidence] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -106,7 +121,7 @@ const EvidenceLogView = () => {
                 <th>Timestamp</th>
                 <th>User</th>
                 <th>Resource</th>
-                <th>Risk</th>
+                <th>Policy Risk</th>
                 <th>Policy Decision</th>
                 <th>Record Hash</th>
                 <th>Action</th>
@@ -123,7 +138,7 @@ const EvidenceLogView = () => {
                   <td>{log.timestamp ? formatDateIST(log.timestamp) : 'Not available'}</td>
                   <td>{log.user || 'Not available'}</td>
                   <td>{log.resource || 'Not available'}</td>
-                  <td>{log.risk || 'Not available'}</td>
+                  <td>{getPolicyRisk(log.policy_decision)}</td>
                   <td>{log.policy_decision || 'Not available'}</td>
                   <td style={{ fontFamily: 'monospace', fontSize: '0.85em' }}>
                     {log.record_hash ? log.record_hash.substring(0, 16) + '...' : 'Not available'}

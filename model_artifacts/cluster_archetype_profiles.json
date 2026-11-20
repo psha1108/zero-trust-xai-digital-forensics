@@ -1,0 +1,86 @@
+{
+  "Cluster_0": {
+    "archetype_label": "Behavioral Archetype A (Standard Workflow Profile)",
+    "member_count": 124,
+    "proportion": 0.2238,
+    "dominant_role": "User",
+    "mean_behavioral_indicators": {
+      "hour_of_day": 12.056,
+      "day_of_week": 2.621,
+      "session_duration_min": 35.702,
+      "request_count": 211.581,
+      "bytes_transferred_kb": 25555.754,
+      "failed_logins_last_24h": 1.323,
+      "mfa_prompt_count": 1.952,
+      "device_trust_score": 0.499,
+      "location_anomaly_score": 0.506,
+      "access_risk_index": 0.41,
+      "action_sensitivity_level": 2.282,
+      "session_entropy": 2.772,
+      "resource_criticality_tier": 1.758
+    }
+  },
+  "Cluster_1": {
+    "archetype_label": "Behavioral Archetype B (Elevated Session Activity Profile)",
+    "member_count": 137,
+    "proportion": 0.2473,
+    "dominant_role": "User",
+    "mean_behavioral_indicators": {
+      "hour_of_day": 14.328,
+      "day_of_week": 3.599,
+      "session_duration_min": 72.584,
+      "request_count": 214.613,
+      "bytes_transferred_kb": 31634.275,
+      "failed_logins_last_24h": 2.759,
+      "mfa_prompt_count": 1.978,
+      "device_trust_score": 0.508,
+      "location_anomaly_score": 0.421,
+      "access_risk_index": 0.664,
+      "action_sensitivity_level": 2.62,
+      "session_entropy": 1.694,
+      "resource_criticality_tier": 1.803
+    }
+  },
+  "Cluster_2": {
+    "archetype_label": "Behavioral Archetype C (High-Sensitivity Access Profile)",
+    "member_count": 141,
+    "proportion": 0.2545,
+    "dominant_role": "Admin",
+    "mean_behavioral_indicators": {
+      "hour_of_day": 13.057,
+      "day_of_week": 3.191,
+      "session_duration_min": 47.602,
+      "request_count": 330.355,
+      "bytes_transferred_kb": 20088.173,
+      "failed_logins_last_24h": 1.809,
+      "mfa_prompt_count": 2.454,
+      "device_trust_score": 0.778,
+      "location_anomaly_score": 0.53,
+      "access_risk_index": 0.507,
+      "action_sensitivity_level": 2.468,
+      "session_entropy": 1.974,
+      "resource_criticality_tier": 2.291
+    }
+  },
+  "Cluster_3": {
+    "archetype_label": "Behavioral Archetype D (Distributed / Off-Hour Access Profile)",
+    "member_count": 152,
+    "proportion": 0.2744,
+    "dominant_role": "Admin",
+    "mean_behavioral_indicators": {
+      "hour_of_day": 9.0,
+      "day_of_week": 2.388,
+      "session_duration_min": 86.207,
+      "request_count": 246.461,
+      "bytes_transferred_kb": 27433.504,
+      "failed_logins_last_24h": 2.224,
+      "mfa_prompt_count": 1.461,
+      "device_trust_score": 0.756,
+      "location_anomaly_score": 0.538,
+      "access_risk_index": 0.386,
+      "action_sensitivity_level": 2.5,
+      "session_entropy": 2.623,
+      "resource_criticality_tier": 1.941
+    }
+  }
+}
